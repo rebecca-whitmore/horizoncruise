@@ -3,7 +3,7 @@
 :root {
   --ink: #18211f;
   --muted: #5d6865;
-  --paper: #f7f5ef;
+  --paper: #f7f8f8;
   --sea: #174f55;
   --line: #d8d9d2;
 }
@@ -49,7 +49,7 @@ a { color: inherit; }
 
 .article-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem 1.5rem; }
 .card { display: block; text-decoration: none; }
-.card-image, .image-fallback { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: #dce3df; }
+.card-image, .image-fallback { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: #e9eceb; }
 .card-meta { margin: 1rem 0 .55rem; color: var(--muted); font-size: .78rem; }
 .card h2 { margin: 0; font: 500 1.55rem/1.12 Georgia, serif; }
 .card p { color: var(--muted); line-height: 1.55; }

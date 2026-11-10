@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/app/layout";
 import { featuredImage, getPosts, plainText } from "@/lib/wordpress";
 
-export const revalidate = 300;
+export const revalidate = 60;
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",

@@ -11,7 +11,7 @@ in WordPress and fetched through its REST API.
 4. Open `http://localhost:3000`.
 
 The expected API URL format is `https://your-cms.example/wp-json/wp/v2` (without
-a trailing slash). WordPress requests are refreshed every five minutes, so new
+a trailing slash). WordPress requests are refreshed every minute, so new
 or updated articles appear without a manual deployment.
 
 ## Vercel setup

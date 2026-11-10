@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const REVALIDATE_SECONDS = 300;
+export const REVALIDATE_SECONDS = 60;
 
 type RenderedText = { rendered: string };
 

@@ -20,10 +20,16 @@ In the Vercel project, open **Settings → Environment Variables** and add:
 
 ```text
 WORDPRESS_API_URL=https://your-cms.example/wp-json/wp/v2
+SITE_URL=https://your-public-site.example
+SITE_INDEXABLE=false
 ```
 
 Enable it for Preview and Production, then redeploy. `.env.local` is deliberately
 ignored by Git, so local environment values are never uploaded to Vercel.
+
+Keep `SITE_INDEXABLE=false` while the coming-soon page is active. At launch, set
+it to `true` in the Production environment only. Preview deployments remain
+non-indexable automatically.
 
 `vercel.json` selects the Next.js framework and its `.next` output directory. If
 the dashboard has old overrides, the Framework Preset should be **Next.js**; the

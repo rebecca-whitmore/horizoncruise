@@ -15,6 +15,21 @@ type YoastData = {
   schema?: Record<string, unknown>;
 };
 
+type AioseoData = {
+  title?: string | null;
+  description?: string | null;
+  canonical?: string | null;
+  og_title?: string | null;
+  og_description?: string | null;
+  og_url?: string | null;
+  og_image?: string | null;
+  twitter_card?: string | null;
+  twitter_title?: string | null;
+  twitter_description?: string | null;
+  twitter_image?: string | null;
+  schema?: Record<string, unknown>;
+};
+
 export type WordPressPost = {
   id: number;
   slug: string;
@@ -23,6 +38,9 @@ export type WordPressPost = {
   title: RenderedText;
   excerpt: RenderedText;
   content: RenderedText;
+  modified: string;
+  aioseo_head?: string;
+  aioseo_head_json?: AioseoData;
   yoast_head_json?: YoastData;
   _embedded?: {
     "wp:featuredmedia"?: Array<{
@@ -32,6 +50,8 @@ export type WordPressPost = {
     }>;
   };
 };
+
+export type SitemapPost = { slug: string; modified: string };
 
 export type FetchResult<T> =
   | { status: "success"; data: T }
@@ -89,6 +109,18 @@ export async function getPostBySlug(
   }
 }
 
+export async function getSitemapPosts(): Promise<FetchResult<SitemapPost[]>> {
+  try {
+    const posts = await request<SitemapPost[]>(
+      apiUrl("posts", "?per_page=100&_fields=slug,modified"),
+    );
+    return { status: "success", data: posts };
+  } catch (error) {
+    console.error("Could not load posts for the sitemap:", error);
+    return { status: "error", message: "The sitemap could not load articles." };
+  }
+}
+
 export function featuredImage(post: WordPressPost) {
   const image = post._embedded?.["wp:featuredmedia"]?.[0];
   return image
@@ -121,12 +153,24 @@ function metaContent(head: string, key: string) {
   return patterns.map((pattern) => head.match(pattern)?.[1]).find(Boolean);
 }
 
-function canonicalFromHead(head: string) {
-  return head.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i)?.[1];
+export function publicSiteUrl() {
+  return (process.env.SITE_URL || "https://horizoncruise.co.uk").replace(/\/$/, "");
+}
+
+export function publicArticleUrl(post: Pick<WordPressPost, "slug">) {
+  return `${publicSiteUrl()}/articles/${encodeURIComponent(post.slug)}`;
+}
+
+export function isPublicSiteIndexable() {
+  // Vercel previews must stay out of search even after the production launch.
+  const isProduction = !process.env.VERCEL_ENV || process.env.VERCEL_ENV === "production";
+  return process.env.SITE_INDEXABLE === "true" && isProduction;
 }
 
 async function rankMathHead(post: WordPressPost) {
-  if (post.yoast_head_json || !process.env.WORDPRESS_API_URL) return null;
+  if (post.aioseo_head_json || post.yoast_head_json || !process.env.WORDPRESS_API_URL) {
+    return null;
+  }
 
   try {
     const root = process.env.WORDPRESS_API_URL.replace(/\/wp-json\/wp\/v2\/?$/, "");
@@ -144,34 +188,102 @@ async function rankMathHead(post: WordPressPost) {
 
 // SEO values come from the active WordPress plugin, never from duplicated copy.
 export async function metadataForPost(post: WordPressPost): Promise<Metadata> {
+  const aioseo = post.aioseo_head_json;
+  const aioseoHead = post.aioseo_head ?? "";
   const yoast = post.yoast_head_json;
   const rankMath = await rankMathHead(post);
-  const title = yoast?.title ?? (rankMath && metaContent(rankMath, "og:title"));
+  const title =
+    aioseo?.title ??
+    metaContent(aioseoHead, "og:title") ??
+    yoast?.title ??
+    (rankMath && metaContent(rankMath, "og:title"));
   const description =
-    yoast?.description ?? (rankMath && metaContent(rankMath, "description"));
-  const canonical = yoast?.canonical ?? (rankMath && canonicalFromHead(rankMath));
+    aioseo?.description ??
+    metaContent(aioseoHead, "description") ??
+    yoast?.description ??
+    (rankMath && metaContent(rankMath, "description"));
+  // The CMS plugin supplies the SEO content; the public frontend owns its URLs.
+  const canonical = publicArticleUrl(post);
   const ogImage =
-    yoast?.og_image?.[0]?.url ?? (rankMath && metaContent(rankMath, "og:image"));
+    aioseo?.og_image ??
+    metaContent(aioseoHead, "og:image") ??
+    yoast?.og_image?.[0]?.url ??
+    (rankMath && metaContent(rankMath, "og:image"));
+  const twitterImage =
+    aioseo?.twitter_image ?? metaContent(aioseoHead, "twitter:image") ?? ogImage;
 
   return {
     title: title || undefined,
     description: description || undefined,
-    alternates: canonical ? { canonical } : undefined,
+    alternates: { canonical },
+    robots: isPublicSiteIndexable()
+      ? { index: true, follow: true, googleBot: { index: true, follow: true } }
+      : { index: false, follow: false },
     openGraph: {
-      title: yoast?.og_title ?? title ?? undefined,
-      description: yoast?.og_description ?? description ?? undefined,
-      url: yoast?.og_url ?? canonical ?? undefined,
+      title:
+        aioseo?.og_title ?? metaContent(aioseoHead, "og:title") ?? yoast?.og_title ?? title ?? undefined,
+      description:
+        aioseo?.og_description ??
+        metaContent(aioseoHead, "og:description") ??
+        yoast?.og_description ??
+        description ??
+        undefined,
+      url: canonical,
       type: "article",
       publishedTime: post.date,
+      modifiedTime: post.modified,
       images: ogImage ? [{ url: ogImage }] : undefined,
+    },
+    twitter: {
+      card: twitterImage ? "summary_large_image" : "summary",
+      title:
+        aioseo?.twitter_title ?? metaContent(aioseoHead, "twitter:title") ?? title ?? undefined,
+      description:
+        aioseo?.twitter_description ??
+        metaContent(aioseoHead, "twitter:description") ??
+        description ??
+        undefined,
+      images: twitterImage ? [twitterImage] : undefined,
     },
   };
 }
 
-// Yoast exposes schema as JSON; Rank Math includes the same JSON-LD in its head response.
+function rewriteSchemaUrls(value: unknown, post: WordPressPost): unknown {
+  if (Array.isArray(value)) return value.map((item) => rewriteSchemaUrls(item, post));
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, rewriteSchemaUrls(item, post)]),
+    );
+  }
+
+  if (typeof value !== "string" || !value.startsWith("http")) return value;
+
+  try {
+    const url = new URL(value);
+    const cms = new URL(post.link);
+    if (url.origin !== cms.origin || url.pathname.startsWith("/wp-content/")) return value;
+
+    const publicUrl = new URL(publicSiteUrl());
+    if (url.pathname === cms.pathname) publicUrl.pathname = `/articles/${post.slug}`;
+    else if (url.pathname.startsWith("/category/")) publicUrl.pathname = "/articles";
+    else if (url.pathname.startsWith("/author/")) publicUrl.pathname = "/about";
+    else publicUrl.pathname = url.pathname;
+    publicUrl.hash = url.hash;
+    return publicUrl.toString();
+  } catch {
+    return value;
+  }
+}
+
+// Schema content comes from AIOSEO, while its CMS page URLs become public URLs.
 export async function schemaForPost(post: WordPressPost) {
+  if (post.aioseo_head_json?.schema) {
+    return JSON.stringify(rewriteSchemaUrls(post.aioseo_head_json.schema, post));
+  }
+
   if (post.yoast_head_json?.schema) {
-    return JSON.stringify(post.yoast_head_json.schema);
+    return JSON.stringify(rewriteSchemaUrls(post.yoast_head_json.schema, post));
   }
 
   const rankMath = await rankMathHead(post);

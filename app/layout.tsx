@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { isPublicSiteIndexable, publicSiteUrl } from "@/lib/wordpress";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(publicSiteUrl()),
   title: "Horizon Cruise",
-  robots: { index: false, follow: false },
+  robots: isPublicSiteIndexable()
+    ? { index: true, follow: true }
+    : { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

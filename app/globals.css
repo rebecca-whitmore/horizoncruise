@@ -56,6 +56,8 @@ a { color: inherit; }
 
 .notice { padding: 1.25rem; border: 1px solid var(--line); color: var(--muted); }
 .playground-stage {
+  display: grid;
+  gap: clamp(3rem, 7vw, 5rem);
   padding: clamp(1.5rem, 4vw, 3rem);
   border: 1px dashed var(--line);
   color: var(--muted);

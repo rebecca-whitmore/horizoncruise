@@ -15,24 +15,47 @@ export default function PlaygroundPage() {
         <h1 className="page-title">Playground</h1>
         <hr className="rule" />
 
-        <section className="playground-stage" aria-labelledby="ship-widget-heading">
-          <header className="playground-heading">
-            <p className="eyebrow">Embedded ship guide</p>
-            <h2 id="ship-widget-heading">Ship widget test</h2>
-          </header>
+        <section className="playground-stage" aria-label="Widget tests">
+          <div className="widget-test">
+            <header className="playground-heading">
+              <p className="eyebrow">Embedded cruise search</p>
+              <h2>Holiday results widget</h2>
+            </header>
 
-          <div className="ship-widget-frame">
-            <iframe
-              src="https://www.widgety.co.uk/widgets/-AKyevjXorNGxJE2o4DF.widget"
-              title="Interactive ship information"
-              loading="lazy"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allow="fullscreen"
-            >
-              <a href="https://www.widgety.co.uk/widgets/-AKyevjXorNGxJE2o4DF.widget">
-                Open the interactive ship information
-              </a>
-            </iframe>
+            <div className="ship-widget-frame">
+              <iframe
+                src="https://www.widgety.co.uk/widgets/bLPiyBSxxqSSDtJCahPx/holidays/result.widget?operator_ids%5B%5D=12"
+                title="Interactive cruise holiday results"
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allow="fullscreen"
+              >
+                <a href="https://www.widgety.co.uk/widgets/bLPiyBSxxqSSDtJCahPx/holidays/result.widget?operator_ids%5B%5D=12">
+                  Open the cruise holiday results
+                </a>
+              </iframe>
+            </div>
+          </div>
+
+          <div className="widget-test">
+            <header className="playground-heading">
+              <p className="eyebrow">Embedded ship guide</p>
+              <h2>Carnival Celebration widget</h2>
+            </header>
+
+            <div className="ship-widget-frame">
+              <iframe
+                src="https://www.widgety.co.uk/widgets/bLPiyBSxxqSSDtJCahPx/ships/carnival-celebration.widget?operator_ids%5B%5D=85&amp;ship_ids%5B%5D=1297"
+                title="Interactive Carnival Celebration ship information"
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allow="fullscreen"
+              >
+                <a href="https://www.widgety.co.uk/widgets/bLPiyBSxxqSSDtJCahPx/ships/carnival-celebration.widget?operator_ids%5B%5D=85&amp;ship_ids%5B%5D=1297">
+                  Open the Carnival Celebration ship information
+                </a>
+              </iframe>
+            </div>
           </div>
         </section>
       </main>

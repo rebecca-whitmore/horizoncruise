@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { SiteHeader } from "@/app/layout";
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default function PlaygroundPage() {
                 loading="lazy"
                 referrerPolicy="strict-origin-when-cross-origin"
                 allow="fullscreen"
+                {...{ tabs: "false" }}
               >
                 <a href="https://www.widgety.co.uk/widgets/bLPiyBSxxqSSDtJCahPx/holidays/result.widget?operator_ids%5B%5D=12">
                   Open the cruise holiday results
@@ -50,6 +52,7 @@ export default function PlaygroundPage() {
                 loading="lazy"
                 referrerPolicy="strict-origin-when-cross-origin"
                 allow="fullscreen"
+                {...{ tabs: "false" }}
               >
                 <a href="https://www.widgety.co.uk/widgets/bLPiyBSxxqSSDtJCahPx/ships/carnival-celebration.widget?operator_ids%5B%5D=85&amp;ship_ids%5B%5D=1297">
                   Open the Carnival Celebration ship information
@@ -58,6 +61,10 @@ export default function PlaygroundPage() {
             </div>
           </div>
         </section>
+        <Script
+          src="https://www.widgety.co.uk/assets/widgety_cruise_tour_search_navigation_script-e5c46a5521b82182ecdc1564d7f90c5cfb653f3ffed29c4220e85749607af1de.js"
+          strategy="afterInteractive"
+        />
       </main>
     </>
   );

@@ -120,10 +120,10 @@ export function Homepage() {
           />
           <div className={styles.heroShade} />
           <div className={styles.heroContent}>
-            <p className={styles.kicker}>Cruise holidays, considered as a whole</p>
+            <p className={styles.kicker}>Explore the world by land and sea.</p>
             <h1>More than a sailing.<br />A holiday worth travelling for.</h1>
             <p className={styles.heroIntro}>
-              Remarkable cruises, thoughtful stays and journeys shaped around what you want to experience.
+              Where you’ve always wanted to go. What you’d love to experience. With cruise expertise and personal care for the whole trip, Horizon Cruise will meticulously plan your holiday from start to finish.
             </p>
             <div className={styles.heroActions}>
               <a className={styles.primaryButton} href="#experiences">Explore the possibilities</a>

@@ -41,3 +41,4 @@ Build Command and Output Directory overrides can be switched off.
 - `/articles` — article index
 - `/articles/[slug]` — individual article
 - `/about` and `/contact` — placeholder pages for later development
+- `/playground` — permanent, non-indexed development sandbox for API and component testing; do not delete without explicit owner approval

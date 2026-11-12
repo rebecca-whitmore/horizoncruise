@@ -5,12 +5,76 @@
  * doing so would expose the credentials to every site visitor.
  */
 
-type WidgetyRecord = Record<string, unknown>;
+type JsonRecord = Record<string, unknown>;
 
-export type WidgetyShipsResult = {
-  ships: WidgetyRecord[];
+export type WidgetyShip = {
+  title: string;
+  slug: string;
+  summary: string;
+  imageUrl?: string;
+  launched?: string;
+  capacity?: number;
+  crew?: number;
+  decks?: number;
+};
+
+export type WidgetySailing = {
+  reference: string;
+  name: string;
+  departureDate: string;
+  returnDate: string;
+  nights?: number;
+  availability: string;
+  startsAt?: string;
+  endsAt?: string;
+  regions: string[];
+  imageUrl?: string;
+  prices: {
+    inside?: number;
+    outside?: number;
+    balcony?: number;
+    suite?: number;
+  };
+};
+
+export type WidgetyExplorerResult = {
+  ship?: WidgetyShip;
+  sailings: WidgetySailing[];
+  totalSailings: number;
   message?: string;
 };
+
+function asRecord(value: unknown): JsonRecord | undefined {
+  return typeof value === "object" && value !== null
+    ? (value as JsonRecord)
+    : undefined;
+}
+
+function asString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function asNumber(value: unknown): number | undefined {
+  const number = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(number) ? number : undefined;
+}
+
+function stringList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function plainText(value: unknown): string {
+  return (asString(value) ?? "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#(?:39|x27);/gi, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 function getWidgetyConfig() {
   const baseUrl = process.env.WIDGETY_API_URL?.replace(/\/$/, "");
@@ -24,71 +88,140 @@ function getWidgetyConfig() {
   return { baseUrl, appId, token };
 }
 
-function findShips(payload: unknown): WidgetyRecord[] {
-  if (Array.isArray(payload)) {
-    return payload.filter(
-      (item): item is WidgetyRecord =>
-        typeof item === "object" && item !== null,
-    );
+async function widgetyRequest(
+  path: string,
+  parameters: Record<string, string>,
+): Promise<JsonRecord> {
+  const { baseUrl, appId, token } = getWidgetyConfig();
+  const url = new URL(`${baseUrl}/${path}`);
+
+  Object.entries(parameters).forEach(([key, value]) => {
+    url.searchParams.set(key, value);
+  });
+  url.searchParams.set("app_id", appId);
+  url.searchParams.set("token", token);
+
+  const response = await fetch(url, {
+    // Do not put a credential-bearing request URL into Next's data cache.
+    cache: "no-store",
+    headers: { Accept: "application/json" },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Widgety returned HTTP ${response.status}.`);
   }
 
-  if (typeof payload !== "object" || payload === null) return [];
+  const payload: unknown = await response.json();
+  const record = asRecord(payload);
+  if (!record) throw new Error("Widgety returned an unexpected response.");
+  return record;
+}
 
-  const object = payload as WidgetyRecord;
-  const possibleLists = [object.ships, object.results, object.data];
-  const list = possibleLists.find(Array.isArray);
+function mapShip(payload: JsonRecord): WidgetyShip | undefined {
+  const title = asString(payload.title);
+  const slug = asString(payload.slug);
+  if (!title || !slug) return undefined;
 
-  return Array.isArray(list)
-    ? list.filter(
-        (item): item is WidgetyRecord =>
-          typeof item === "object" && item !== null,
-      )
-    : [];
+  const facts = asRecord(payload.ship_facts);
+  return {
+    title,
+    slug,
+    summary: plainText(payload.teaser) || plainText(payload.introduction),
+    imageUrl: asString(payload.cover_image_href),
+    launched: asString(facts?.launch_year),
+    capacity: asNumber(facts?.capacity),
+    crew: asNumber(facts?.crew_count),
+    decks: asNumber(facts?.deck_count),
+  };
+}
+
+function priceFrom(record: JsonRecord | undefined, key: string) {
+  return asNumber(record?.[key]);
+}
+
+function mapSailing(value: unknown): WidgetySailing | undefined {
+  const sailing = asRecord(value);
+  if (!sailing) return undefined;
+
+  const reference = asString(sailing.date_ref);
+  const name = asString(sailing.name);
+  const departureDate = asString(sailing.date_from);
+  const returnDate = asString(sailing.date_to);
+  if (!reference || !name || !departureDate || !returnDate) return undefined;
+
+  const headlinePrices = asRecord(sailing.headline_prices);
+  const cruise = asRecord(headlinePrices?.cruise);
+  const double = asRecord(cruise?.double);
+  const startsAt = asRecord(sailing.starts_at);
+  const endsAt = asRecord(sailing.ends_at);
+
+  return {
+    reference,
+    name,
+    departureDate,
+    returnDate,
+    nights: asNumber(sailing.cruise_nights),
+    availability: asString(sailing.availability_string) ?? "unknown",
+    startsAt: asString(startsAt?.name),
+    endsAt: asString(endsAt?.name),
+    regions: stringList(sailing.regions),
+    imageUrl: asString(sailing.image),
+    prices: {
+      inside: priceFrom(double, "from_inside"),
+      outside: priceFrom(double, "from_outside"),
+      balcony: priceFrom(double, "from_balcony"),
+      suite: priceFrom(double, "from_suite"),
+    },
+  };
 }
 
 /**
- * Fetches the ships enabled for this APP key. The request runs on the server,
- * so neither credential is included in the browser's HTML or JavaScript.
+ * Small API explorer for the development playground. It deliberately targets
+ * one ship and a handful of UK departures while we learn the V3 data model.
  */
-export async function getWidgetyShips(): Promise<WidgetyShipsResult> {
+export async function getCelebrityEdgeExplorer(): Promise<WidgetyExplorerResult> {
   try {
-    const { baseUrl, appId, token } = getWidgetyConfig();
-    const url = new URL(`${baseUrl}/ships.json`);
-    url.searchParams.set("app_id", appId);
-    url.searchParams.set("token", token);
-    // One record is enough to prove that this trial key can read ship data.
-    url.searchParams.set("limit", "1");
+    const today = new Date().toISOString().slice(0, 10);
+    const [shipPayload, datesPayload] = await Promise.all([
+      widgetyRequest("ships/celebrity-edge.json", {}),
+      widgetyRequest("holidays/dates.json", {
+        market: "uk",
+        operators: "celebrity-cruises",
+        ships: "celebrity-edge",
+        availability: "available,limited,enquire",
+        date_from: today,
+        show_headlines: "true",
+        limit: "10",
+      }),
+    ]);
 
-    const response = await fetch(url, {
-      // Avoid putting a credential-bearing request URL into Next's data cache.
-      cache: "no-store",
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      return {
-        ships: [],
-        message: `Widgety returned HTTP ${response.status}.`,
-      };
-    }
-
-    const payload: unknown = await response.json();
-    const ships = findShips(payload);
+    const dates = Array.isArray(datesPayload.dates) ? datesPayload.dates : [];
+    const sailings = dates
+      .map(mapSailing)
+      .filter((sailing): sailing is WidgetySailing => Boolean(sailing))
+      .sort(
+        (a, b) =>
+          new Date(a.departureDate).getTime() -
+          new Date(b.departureDate).getTime(),
+      )
+      .slice(0, 3);
 
     return {
-      ships,
+      ship: mapShip(shipPayload),
+      sailings,
+      totalSailings: asNumber(datesPayload.total) ?? sailings.length,
       message:
-        ships.length === 0
-          ? "The API connected, but no ships were present in the response."
+        sailings.length === 0
+          ? "The API connected, but returned no matching Celebrity Edge departures."
           : undefined,
     };
   } catch {
-    // Some fetch errors contain the full request URL, including its query
-    // string, so deliberately do not write the error object to server logs.
-    console.error("Could not load Widgety ships.");
-
+    // Fetch errors can contain the complete credential-bearing request URL,
+    // so deliberately do not write the error object to server logs.
+    console.error("Could not load the Widgety API explorer.");
     return {
-      ships: [],
+      sailings: [],
+      totalSailings: 0,
       message: "The Widgety API could not be reached at the moment.",
     };
   }

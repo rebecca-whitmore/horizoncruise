@@ -54,10 +54,15 @@
   isolation: isolate;
 }
 
-.heroImage,
+.heroPhoto,
 .heroShade { position: absolute; inset: 0; }
-.heroImage { border: 0; border-radius: 0; }
-.heroShade { z-index: 1; background: linear-gradient(90deg, rgba(10, 29, 31, .84) 0%, rgba(10, 29, 31, .48) 50%, rgba(10, 29, 31, .1) 100%); }
+.heroPhoto { z-index: 0; object-fit: cover; object-position: 62% center; }
+.heroShade {
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(8, 28, 31, .92) 0%, rgba(8, 28, 31, .75) 39%, rgba(8, 28, 31, .32) 69%, rgba(8, 28, 31, .12) 100%),
+    linear-gradient(0deg, rgba(8, 28, 31, .56) 0%, transparent 45%);
+}
 
 .heroContent {
   position: relative;
@@ -73,6 +78,7 @@
   margin: 0;
   font: 400 clamp(3.4rem, 7.8vw, 7rem)/.94 Georgia, serif;
   letter-spacing: -.055em;
+  text-shadow: 0 2px 22px rgba(0, 0, 0, .18);
 }
 
 .kicker,
@@ -110,7 +116,6 @@
 .textLinkLight span,
 .inlineLink span,
 .tailorBanner a span { color: var(--gold); }
-.heroImageNote { position: absolute; right: 1rem; bottom: 1rem; z-index: 3; margin: 0; color: rgba(255,255,255,.72); font-size: .68rem; }
 
 .imagePlaceholder {
   position: relative;
@@ -264,10 +269,14 @@
   .brand img { width: 32px; height: 32px; }
   .headerCta { padding: .7rem .8rem; font-size: .65rem; }
   .hero { min-height: 690px; }
-  .heroShade { background: linear-gradient(0deg, rgba(10,29,31,.9) 0%, rgba(10,29,31,.58) 70%, rgba(10,29,31,.24) 100%); }
+  .heroPhoto { object-position: 68% center; }
+  .heroShade {
+    background:
+      linear-gradient(0deg, rgba(8,29,31,.94) 0%, rgba(8,29,31,.74) 58%, rgba(8,29,31,.28) 100%),
+      linear-gradient(90deg, rgba(8,29,31,.56), transparent 82%);
+  }
   .heroContent h1 { font-size: clamp(3rem, 15vw, 4.8rem); }
   .heroActions { align-items: flex-start; flex-direction: column; gap: 1.3rem; }
-  .heroImageNote { display: none; }
   .searchStrip,
   .sectionHeading { grid-template-columns: 1fr; }
   .searchMockup { grid-template-columns: 1fr; }

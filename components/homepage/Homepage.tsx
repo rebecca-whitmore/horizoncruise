@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import alaskaHeroImage from "@/lib/images/alaska-cruise-ship.webp";
 import styles from "./Homepage.module.css";
 
 type PlaceholderProps = {
@@ -108,11 +109,14 @@ export function Homepage() {
 
       <main>
         <section className={styles.hero}>
-          <ImagePlaceholder
-            label="Scenic hero photography — a journey with a powerful sense of place"
-            size="2400 × 1500"
-            variant="ocean"
-            className={styles.heroImage}
+          <Image
+            className={styles.heroPhoto}
+            src={alaskaHeroImage}
+            alt="Cruise ship sailing through calm turquoise water beneath snow-capped Alaskan mountains"
+            fill
+            priority
+            quality={88}
+            sizes="100vw"
           />
           <div className={styles.heroShade} />
           <div className={styles.heroContent}>
@@ -126,7 +130,6 @@ export function Homepage() {
               <a className={styles.textLinkLight} href="#journeys">See featured journeys <span>→</span></a>
             </div>
           </div>
-          <p className={styles.heroImageNote}>Image placeholder · 2400 × 1500px preferred</p>
         </section>
 
         <section className={styles.searchStrip} aria-label="Sailing search preview">

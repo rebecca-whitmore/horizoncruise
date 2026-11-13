@@ -1,46 +1,48 @@
+import { unstable_cache } from "next/cache";
+
 /**
- * Server-only helpers for Widgety's API.
- *
- * Never move the APP ID or token into a NEXT_PUBLIC_ environment variable:
- * doing so would expose the credentials to every site visitor.
+ * Server-only helpers for Widgety's API. Credentials must never use a
+ * NEXT_PUBLIC_ variable because that would expose them to every visitor.
  */
 
 type JsonRecord = Record<string, unknown>;
 
-export type WidgetyShip = {
-  title: string;
-  slug: string;
-  summary: string;
-  imageUrl?: string;
-  launched?: string;
-  capacity?: number;
-  crew?: number;
-  decks?: number;
-};
-
-export type WidgetySailing = {
-  reference: string;
+export type ShipContentItem = {
   name: string;
-  departureDate: string;
-  returnDate: string;
-  nights?: number;
-  availability: string;
-  startsAt?: string;
-  endsAt?: string;
-  regions: string[];
+  description: string;
   imageUrl?: string;
-  prices: {
-    inside?: number;
-    outside?: number;
-    balcony?: number;
-    suite?: number;
-  };
+  meta?: string;
 };
 
-export type WidgetyExplorerResult = {
-  ship?: WidgetyShip;
-  sailings: WidgetySailing[];
-  totalSailings: number;
+export type ShipDeck = {
+  name: string;
+  description: string;
+  imageUrl?: string;
+};
+
+export type ShipContentSection = {
+  intro: string;
+  items: ShipContentItem[];
+  totalItems: number;
+};
+
+export type WidgetyShipContent = {
+  title: string;
+  summary: string;
+  overview: string;
+  imageUrl?: string;
+  facts: Array<{ label: string; value: string }>;
+  staterooms: ShipContentSection;
+  decks: ShipDeck[];
+  dining: ShipContentSection;
+  entertainment: ShipContentSection;
+  healthAndFitness: ShipContentSection;
+  enrichment: ShipContentSection;
+  usefulToKnow: ShipContentItem[];
+};
+
+export type WidgetyShipContentResult = {
+  ship?: WidgetyShipContent;
   message?: string;
 };
 
@@ -59,14 +61,11 @@ function asNumber(value: unknown): number | undefined {
   return Number.isFinite(number) ? number : undefined;
 }
 
-function stringList(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string")
-    : [];
-}
-
 function plainText(value: unknown): string {
   return (asString(value) ?? "")
+    .replace(/<br\s*\/?\s*>/gi, " ")
+    .replace(/<\/p>/gi, " ")
+    .replace(/<\/li>/gi, "; ")
     .replace(/<[^>]*>/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&nbsp;/g, " ")
@@ -74,6 +73,23 @@ function plainText(value: unknown): string {
     .replace(/&quot;/g, '"')
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function concise(value: unknown, maximum = 420): string {
+  const text = plainText(value);
+  if (text.length <= maximum) return text;
+  const shortened = text.slice(0, maximum);
+  const sentenceEnd = Math.max(
+    shortened.lastIndexOf(". "),
+    shortened.lastIndexOf("; "),
+  );
+  return `${shortened.slice(0, sentenceEnd > maximum * 0.55 ? sentenceEnd + 1 : maximum).trim()}…`;
+}
+
+function firstImage(value: unknown): string | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const image = asRecord(value[0]);
+  return asString(image?.href);
 }
 
 function getWidgetyConfig() {
@@ -84,145 +100,158 @@ function getWidgetyConfig() {
   if (!baseUrl || !appId || !token) {
     throw new Error("Widgety API credentials are not configured.");
   }
-
   return { baseUrl, appId, token };
 }
 
-async function widgetyRequest(
-  path: string,
-  parameters: Record<string, string>,
-): Promise<JsonRecord> {
+async function widgetyRequest(path: string): Promise<JsonRecord> {
   const { baseUrl, appId, token } = getWidgetyConfig();
   const url = new URL(`${baseUrl}/${path}`);
-
-  Object.entries(parameters).forEach(([key, value]) => {
-    url.searchParams.set(key, value);
-  });
   url.searchParams.set("app_id", appId);
   url.searchParams.set("token", token);
 
   const response = await fetch(url, {
-    // Do not put a credential-bearing request URL into Next's data cache.
+    // The safe cache below stores only our mapped result, not this secret URL.
     cache: "no-store",
     headers: { Accept: "application/json" },
   });
 
-  if (!response.ok) {
-    throw new Error(`Widgety returned HTTP ${response.status}.`);
-  }
-
+  if (!response.ok) throw new Error(`Widgety returned HTTP ${response.status}.`);
   const payload: unknown = await response.json();
   const record = asRecord(payload);
   if (!record) throw new Error("Widgety returned an unexpected response.");
   return record;
 }
 
-function mapShip(payload: JsonRecord): WidgetyShip | undefined {
+function mapItems(value: unknown, maximum: number): ShipContentItem[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((entry): ShipContentItem | undefined => {
+      const item = asRecord(entry);
+      const name = asString(item?.name);
+      if (!item || !name) return undefined;
+
+      const types = Array.isArray(item.types)
+        ? item.types.filter((type): type is string => typeof type === "string")
+        : [];
+      const experience = asString(item.experience);
+      const food = asString(item.food);
+
+      return {
+        name,
+        description: concise(item.description),
+        imageUrl: firstImage(item.images) ?? firstImage(item.floorplans),
+        meta: [experience, food, ...types].filter(Boolean).join(" · ") || undefined,
+      };
+    })
+    .filter((item): item is ShipContentItem => Boolean(item))
+    .slice(0, maximum);
+}
+
+function mapSection(
+  payload: JsonRecord,
+  introField: string,
+  itemsField: string,
+  maximum: number,
+): ShipContentSection {
+  const intro = asRecord(payload[introField]);
+  const sourceItems = Array.isArray(payload[itemsField]) ? payload[itemsField] : [];
+  return {
+    intro: concise(intro?.intro, 900),
+    items: mapItems(sourceItems, maximum),
+    totalItems: sourceItems.length,
+  };
+}
+
+function mapDecks(value: unknown): ShipDeck[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry): ShipDeck | undefined => {
+      const deck = asRecord(entry);
+      const name = asString(deck?.name);
+      if (!deck || !name) return undefined;
+      return {
+        name,
+        description: concise(deck.description, 800),
+        imageUrl: firstImage(deck.images),
+      };
+    })
+    .filter((deck): deck is ShipDeck => Boolean(deck));
+}
+
+function practicalItem(name: string, value: unknown): ShipContentItem | undefined {
+  const description = concise(value, 650);
+  return description ? { name, description } : undefined;
+}
+
+function mapShip(payload: JsonRecord): WidgetyShipContent | undefined {
   const title = asString(payload.title);
-  const slug = asString(payload.slug);
-  if (!title || !slug) return undefined;
+  if (!title) return undefined;
 
   const facts = asRecord(payload.ship_facts);
+  const factValues: Array<[string, string | number | undefined]> = [
+    ["Launched", asString(facts?.launch_year)],
+    ["Guests", asNumber(facts?.capacity)?.toLocaleString("en-GB")],
+    ["Crew", asNumber(facts?.crew_count)?.toLocaleString("en-GB")],
+    ["Decks", asNumber(facts?.deck_count)],
+    ["Length", asNumber(facts?.length) ? `${asNumber(facts?.length)} m` : undefined],
+    ["Tonnage", asNumber(facts?.gross_tonnage)?.toLocaleString("en-GB")],
+  ];
+
+  const useful = [
+    practicalItem("Good to know", payload.useful_to_know),
+    practicalItem("Gratuities", payload.gratuities),
+    practicalItem("Smoking policy", payload.smoking),
+    practicalItem("Travelling with children", payload.childrens_facilities),
+  ].filter((item): item is ShipContentItem => Boolean(item));
+
+  if (useful.length === 0) {
+    useful.push({
+      name: "Practical information",
+      description:
+        "Widgety does not currently provide a dedicated useful-information entry for this ship. We can add verified operator guidance here later.",
+    });
+  }
+
   return {
     title,
-    slug,
-    summary: plainText(payload.teaser) || plainText(payload.introduction),
+    summary: concise(payload.teaser, 500),
+    overview: concise(payload.introduction, 1500),
     imageUrl: asString(payload.cover_image_href),
-    launched: asString(facts?.launch_year),
-    capacity: asNumber(facts?.capacity),
-    crew: asNumber(facts?.crew_count),
-    decks: asNumber(facts?.deck_count),
+    facts: factValues
+      .filter((fact): fact is [string, string | number] => fact[1] !== undefined)
+      .map(([label, value]) => ({ label, value: String(value) })),
+    staterooms: mapSection(payload, "accommodation", "accomodation_types", 6),
+    decks: mapDecks(payload.deckplans),
+    dining: mapSection(payload, "dining", "dining_options", 6),
+    entertainment: mapSection(payload, "entertainment", "entertainment_types", 6),
+    healthAndFitness: mapSection(
+      payload,
+      "health_and_fitness",
+      "health_fitness_types",
+      6,
+    ),
+    enrichment: mapSection(payload, "enrichment", "enrichment_types", 6),
+    usefulToKnow: useful,
   };
 }
 
-function priceFrom(record: JsonRecord | undefined, key: string) {
-  return asNumber(record?.[key]);
-}
+const getCachedCelebrityEdge = unstable_cache(
+  async () => mapShip(await widgetyRequest("ships/celebrity-edge.json")),
+  ["widgety-ship-content", "celebrity-edge", "v1"],
+  { revalidate: 3600 },
+);
 
-function mapSailing(value: unknown): WidgetySailing | undefined {
-  const sailing = asRecord(value);
-  if (!sailing) return undefined;
-
-  const reference = asString(sailing.date_ref);
-  const name = asString(sailing.name);
-  const departureDate = asString(sailing.date_from);
-  const returnDate = asString(sailing.date_to);
-  if (!reference || !name || !departureDate || !returnDate) return undefined;
-
-  const headlinePrices = asRecord(sailing.headline_prices);
-  const cruise = asRecord(headlinePrices?.cruise);
-  const double = asRecord(cruise?.double);
-  const startsAt = asRecord(sailing.starts_at);
-  const endsAt = asRecord(sailing.ends_at);
-
-  return {
-    reference,
-    name,
-    departureDate,
-    returnDate,
-    nights: asNumber(sailing.cruise_nights),
-    availability: asString(sailing.availability_string) ?? "unknown",
-    startsAt: asString(startsAt?.name),
-    endsAt: asString(endsAt?.name),
-    regions: stringList(sailing.regions),
-    imageUrl: asString(sailing.image),
-    prices: {
-      inside: priceFrom(double, "from_inside"),
-      outside: priceFrom(double, "from_outside"),
-      balcony: priceFrom(double, "from_balcony"),
-      suite: priceFrom(double, "from_suite"),
-    },
-  };
-}
-
-/**
- * Small API explorer for the development playground. It deliberately targets
- * one ship and a handful of UK departures while we learn the V3 data model.
- */
-export async function getCelebrityEdgeExplorer(): Promise<WidgetyExplorerResult> {
+/** Fetches and maps the Celebrity Edge ship content for our prototype. */
+export async function getCelebrityEdgeContent(): Promise<WidgetyShipContentResult> {
   try {
-    const today = new Date().toISOString().slice(0, 10);
-    const [shipPayload, datesPayload] = await Promise.all([
-      widgetyRequest("ships/celebrity-edge.json", {}),
-      widgetyRequest("holidays/dates.json", {
-        market: "uk",
-        operators: "celebrity-cruises",
-        ships: "celebrity-edge",
-        availability: "available,limited,enquire",
-        date_from: today,
-        show_headlines: "true",
-        limit: "10",
-      }),
-    ]);
-
-    const dates = Array.isArray(datesPayload.dates) ? datesPayload.dates : [];
-    const sailings = dates
-      .map(mapSailing)
-      .filter((sailing): sailing is WidgetySailing => Boolean(sailing))
-      .sort(
-        (a, b) =>
-          new Date(a.departureDate).getTime() -
-          new Date(b.departureDate).getTime(),
-      )
-      .slice(0, 3);
-
-    return {
-      ship: mapShip(shipPayload),
-      sailings,
-      totalSailings: asNumber(datesPayload.total) ?? sailings.length,
-      message:
-        sailings.length === 0
-          ? "The API connected, but returned no matching Celebrity Edge departures."
-          : undefined,
-    };
+    const ship = await getCachedCelebrityEdge();
+    return ship
+      ? { ship }
+      : { message: "Widgety returned an unexpected ship record." };
   } catch {
-    // Fetch errors can contain the complete credential-bearing request URL,
-    // so deliberately do not write the error object to server logs.
-    console.error("Could not load the Widgety API explorer.");
-    return {
-      sailings: [],
-      totalSailings: 0,
-      message: "The Widgety API could not be reached at the moment.",
-    };
+    // Fetch errors can contain the credential-bearing URL, so do not log them.
+    console.error("Could not load the Widgety ship content.");
+    return { message: "The Widgety API could not be reached at the moment." };
   }
 }

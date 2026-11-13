@@ -61,41 +61,53 @@ a { color: inherit; }
 .notice { padding: 1.25rem; border: 1px solid var(--line); color: var(--muted); }
 .playground-intro { max-width: 720px; }
 .playground-intro h2,
-.api-test h2 { margin: 0 0 .75rem; font: 500 clamp(2rem, 4vw, 3.25rem)/1.05 Georgia, serif; }
+.api-prototype h2 { margin: 0 0 .75rem; font: 500 clamp(2rem, 4vw, 3.25rem)/1.05 Georgia, serif; }
 .playground-intro > p:last-child,
-.api-test p { color: var(--muted); line-height: 1.65; }
+.api-prototype p { color: var(--muted); line-height: 1.65; }
 .playground-label { margin: 0 0 .75rem; color: var(--gold-text) !important; font-size: .72rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 .widgety-shell { margin-top: 2rem; overflow: hidden; border: 1px solid var(--line); border-radius: .5rem; background: #fff; }
 .widgety-frame { display: block; min-height: 600px; }
-.api-test { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, .55fr); gap: 2rem; align-items: center; margin-top: 3rem; padding: clamp(1.5rem, 4vw, 3rem); background: var(--paper-alt); border: 1px solid var(--line); }
-.api-status { display: grid; gap: .4rem; padding: 1.25rem; border-left: 3px solid var(--sea); background: var(--paper); }
-.api-status strong { font-family: Georgia, serif; font-size: 1.2rem; }
-.api-status span { color: var(--muted); font-size: .9rem; line-height: 1.5; }
-.ship-snapshot { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr); overflow: hidden; background: var(--paper); border: 1px solid var(--line); }
-.ship-snapshot-image, .ship-image-fallback { width: 100%; height: 100%; min-height: 360px; object-fit: cover; background: #e4e9e7; }
-.ship-snapshot-copy { align-self: center; padding: clamp(1.5rem, 4vw, 3rem); }
-.ship-snapshot-copy h3, .sailing-section h3 { margin: 0 0 1rem; font: 500 clamp(2rem, 4vw, 3.25rem)/1.05 Georgia, serif; }
-.ship-facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 1.5rem 0 0; }
+.api-prototype { margin-top: 4rem; padding-top: 3rem; border-top: 1px solid var(--line); }
+.api-prototype-heading { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .65fr); gap: 2rem; align-items: end; margin-bottom: 2rem; }
+.api-prototype-heading > p { margin: 0; }
+.ship-experience { overflow: hidden; border: 1px solid var(--line); background: var(--paper); }
+.ship-profile-hero { position: relative; min-height: 430px; overflow: hidden; background: var(--sea); }
+.ship-profile-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ship-profile-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(12, 28, 29, .9) 0%, rgba(12, 28, 29, .6) 43%, rgba(12, 28, 29, .08) 80%); }
+.ship-profile-heading { position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: end; width: min(620px, 75%); min-height: 430px; padding: clamp(2rem, 6vw, 5rem); color: #fff; }
+.ship-profile-heading .playground-label { color: #dfc58e !important; }
+.ship-profile-heading h3 { margin: 0 0 1rem; font: 500 clamp(3rem, 7vw, 5.75rem)/.92 Georgia, serif; letter-spacing: -.045em; }
+.ship-profile-heading > p:last-child { margin: 0; color: #f1f4f3; font-size: 1rem; }
+.ship-tabs { display: flex; overflow-x: auto; border-bottom: 1px solid var(--line); background: var(--paper-alt); scrollbar-width: thin; }
+.ship-tab { flex: 0 0 auto; min-height: 3.75rem; padding: .85rem 1.1rem; border: 0; border-right: 1px solid var(--line); border-bottom: 3px solid transparent; color: var(--muted); background: transparent; font: inherit; font-size: .78rem; font-weight: 700; cursor: pointer; }
+.ship-tab:hover { color: var(--sea); background: var(--paper); }
+.ship-tab[aria-selected="true"] { color: var(--sea); border-bottom-color: var(--gold); background: var(--paper); }
+.ship-tab:focus-visible, .deck-list button:focus-visible { outline: 3px solid var(--gold); outline-offset: -3px; }
+.ship-tab-panel { min-height: 34rem; padding: clamp(1.5rem, 4vw, 3.5rem); }
+.ship-tab-panel:focus { outline: none; }
+.ship-overview { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr); gap: clamp(2rem, 5vw, 5rem); align-items: start; }
+.ship-overview h4, .deck-plan-view h4 { margin: 0 0 1rem; font: 500 clamp(2rem, 4vw, 3.5rem)/1 Georgia, serif; }
+.ship-tab-intro { max-width: 820px; margin: 0 0 2rem; color: var(--muted); font: 1.03rem/1.75 Georgia, serif; }
+.ship-facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 0; }
 .ship-facts div { padding-top: .75rem; border-top: 1px solid var(--line); }
 .ship-facts dt { color: var(--muted); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
 .ship-facts dd { margin: .35rem 0 0; font-family: Georgia, serif; font-size: 1.25rem; }
-.sailing-section { grid-column: 1 / -1; padding-top: 1rem; }
-.sailing-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; margin-bottom: 1.5rem; }
-.sailing-section-heading h3 { margin-bottom: 0; }
-.sailing-section-heading > p { margin: 0; font-size: .9rem; }
-.sailing-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
-.sailing-card { overflow: hidden; background: var(--paper); border: 1px solid var(--line); }
-.sailing-image, .sailing-image-fallback { display: block; width: 100%; aspect-ratio: 8 / 5; object-fit: cover; background: #e4e9e7; }
-.sailing-copy { padding: 1.25rem; }
-.sailing-copy h4 { margin: 0 0 .75rem; font: 500 1.4rem/1.15 Georgia, serif; }
-.sailing-copy > p { margin: .35rem 0; font-size: .9rem; }
-.sailing-meta { color: var(--sea) !important; font-size: .7rem !important; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
-.sailing-prices { display: grid; gap: .45rem; margin: 1rem 0; padding-top: 1rem; border-top: 1px solid var(--line); }
-.sailing-prices div { display: flex; justify-content: space-between; gap: 1rem; font-size: .82rem; }
-.sailing-prices dt { color: var(--muted); }
-.sailing-prices dd { margin: 0; font-weight: 700; }
-.sailing-copy small { display: block; overflow-wrap: anywhere; color: var(--muted); font-size: .68rem; }
-.api-caveat { margin: 1.5rem 0 0 !important; padding: 1rem 1.25rem; border-left: 3px solid var(--warning); background: var(--paper); font-size: .82rem; }
+.ship-content-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+.ship-content-card { overflow: hidden; border: 1px solid var(--line); background: var(--paper-alt); }
+.ship-content-card-image { display: block; width: 100%; aspect-ratio: 8 / 5; object-fit: cover; background: #e4e9e7; }
+.ship-content-card-copy { padding: 1.25rem; }
+.ship-content-card h4 { margin: 0 0 .7rem; font: 500 1.4rem/1.15 Georgia, serif; }
+.ship-content-card p { margin: 0; font-size: .88rem; }
+.ship-card-meta { margin-bottom: .6rem !important; color: var(--gold-text) !important; font-size: .68rem !important; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.ship-content-note { margin: 1.5rem 0 0 !important; font-size: .8rem; }
+.deck-plan-layout { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3.5rem); }
+.deck-list { display: flex; flex-direction: column; align-self: start; border: 1px solid var(--line); }
+.deck-list button { padding: .8rem 1rem; border: 0; border-bottom: 1px solid var(--line); color: var(--muted); background: var(--paper-alt); font: inherit; text-align: left; cursor: pointer; }
+.deck-list button:last-child { border-bottom: 0; }
+.deck-list button:hover, .deck-list button[aria-current="true"] { color: #fff; background: var(--sea); }
+.deck-plan-view { min-width: 0; }
+.deck-plan-view > div { max-width: 700px; }
+.deck-plan-image { display: block; width: 100%; height: auto; max-height: 800px; margin-top: 2rem; object-fit: contain; object-position: top left; background: #fff; border: 1px solid var(--line); }
 .article-header { max-width: 850px; }
 .article-hero { width: 100%; max-height: 680px; margin: 3rem 0; object-fit: cover; }
 .article-body { max-width: 720px; font: 1.1rem/1.75 Georgia, serif; }
@@ -107,9 +119,12 @@ a { color: inherit; }
   .site-header { align-items: flex-start; padding-block: 1.25rem; }
   .site-nav { flex-wrap: wrap; justify-content: flex-end; gap: .65rem 1rem; }
   .article-grid { grid-template-columns: 1fr; }
-  .api-test { grid-template-columns: 1fr; }
-  .ship-snapshot { grid-template-columns: 1fr; }
-  .ship-snapshot-image, .ship-image-fallback { min-height: 240px; }
-  .sailing-section-heading { align-items: flex-start; flex-direction: column; gap: .75rem; }
-  .sailing-grid { grid-template-columns: 1fr; }
+  .api-prototype-heading, .ship-overview { grid-template-columns: 1fr; }
+  .ship-profile-hero, .ship-profile-heading { min-height: 390px; }
+  .ship-profile-heading { width: 100%; padding: 2rem 1.5rem; }
+  .ship-profile-overlay { background: linear-gradient(0deg, rgba(12, 28, 29, .92) 0%, rgba(12, 28, 29, .3) 85%); }
+  .ship-content-grid { grid-template-columns: 1fr; }
+  .deck-plan-layout { grid-template-columns: 1fr; }
+  .deck-list { display: grid; grid-template-columns: repeat(2, 1fr); }
+  .deck-list button { border-right: 1px solid var(--line); }
 }

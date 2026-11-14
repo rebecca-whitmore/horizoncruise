@@ -69,7 +69,6 @@ export function WidgetyHolidayResults() {
   const widgetAttributes = {
     "preview-nav": "true",
     "results-nav": "true",
-    tabs: "false",
   };
 
   return (

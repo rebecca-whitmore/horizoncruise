@@ -202,7 +202,7 @@ export async function getCruiseSearchOptions(): Promise<CruiseSearchOptions> {
 
 export async function searchCruises(query: CruiseSearchQuery): Promise<CruiseSearchResponse> {
   const page = Math.max(1, query.page ?? 1);
-  const perPage = [15, 30, 40, 50, 60].includes(query.perPage ?? 30) ? query.perPage ?? 30 : 30;
+  const perPage = [15, 25, 50].includes(query.perPage ?? 25) ? query.perPage ?? 25 : 25;
   const start = (page - 1) * perPage;
   const firstUpstreamPage = Math.floor(start / 25) + 1;
   const lastUpstreamPage = Math.floor((start + perPage - 1) / 25) + 1;

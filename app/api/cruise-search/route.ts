@@ -16,10 +16,10 @@ export async function GET(request: NextRequest) {
       adultsOnly: query.get("adultsOnly") === "true",
       sort: query.get("sort") ?? "date",
       page: Number(query.get("page") || 1),
-      perPage: Number(query.get("perPage") || 30),
+      perPage: Number(query.get("perPage") || 25),
     }));
   } catch {
     console.error("Could not load Widgety cruise search results.");
-    return NextResponse.json({ results: [], total: 0, page: 1, perPage: 30, message: "Cruise results are temporarily unavailable. Please try again shortly." }, { status: 502 });
+    return NextResponse.json({ results: [], total: 0, page: 1, perPage: 25, message: "Cruise results are temporarily unavailable. Please try again shortly." }, { status: 502 });
   }
 }

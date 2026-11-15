@@ -7,7 +7,7 @@ import type { CruiseSearchOptions, CruiseSearchQuery, CruiseSearchResponse } fro
 type Props = { options: CruiseSearchOptions; initial: CruiseSearchResponse };
 type View = "grid" | "list";
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const defaultFilters: CruiseSearchQuery = { months: [], types: [], destinations: [], sort: "date", page: 1, perPage: 30 };
+const defaultFilters: CruiseSearchQuery = { months: [], types: [], destinations: [], sort: "date", page: 1, perPage: 25 };
 
 function dateLabel(value: string) {
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(value));
@@ -106,7 +106,7 @@ export default function CruiseSearch({ options, initial }: Props) {
             <div className="cruise-card-media">{cruise.imageUrl?<Image src={cruise.imageUrl} alt="" fill sizes={view==="grid"?"(max-width: 900px) 100vw, 33vw":"(max-width: 900px) 100vw, 38vw"}/>:<div className="cruise-image-fallback">Horizon Cruise</div>}</div>
             <div className="cruise-card-copy"><div className="cruise-card-top"><p>{cruise.operatorName}</p>{cruise.price&&<p className="cruise-price"><span>From</span> £{Math.round(cruise.price).toLocaleString("en-GB")}<small>pp</small></p>}</div><h3>{cruise.name}</h3><p className="cruise-route">{[cruise.startsAt,cruise.endsAt].filter(Boolean).join(" to ")}</p><dl><div><dt>Departs</dt><dd>{dateLabel(cruise.dateFrom)}</dd></div><div><dt>Duration</dt><dd>{cruise.nights} nights</dd></div><div><dt>Ship</dt><dd>{cruise.shipName}</dd></div><div><dt>Region</dt><dd>{cruise.destinations[0]??"Multiple destinations"}</dd></div></dl></div>
           </article>):<div className="empty-results"><h3>No sailings match those filters</h3><p>Remove one or two selections to broaden your search.</p><button type="button" onClick={clearAll}>Clear all filters</button></div>}</div>
-          <div className="results-footer"><label>Show <select value={filters.perPage} onChange={(event)=>update({perPage:Number(event.target.value)})}>{[15,30,40,50,60].map((value)=><option key={value}>{value}</option>)}</select> per page</label><div className="pagination"><button type="button" disabled={(filters.page??1)<=1} onClick={()=>setFilters((current)=>({...current,page:(current.page??1)-1}))}>Previous</button><span>Page {filters.page??1} of {pageCount}</span><button type="button" disabled={(filters.page??1)>=pageCount} onClick={()=>setFilters((current)=>({...current,page:(current.page??1)+1}))}>Next</button></div></div>
+          <div className="results-footer"><label>Show <select value={filters.perPage} onChange={(event)=>update({perPage:Number(event.target.value)})}>{[15,25,50].map((value)=><option key={value}>{value}</option>)}</select> per page</label><div className="pagination"><button type="button" disabled={(filters.page??1)<=1} onClick={()=>setFilters((current)=>({...current,page:(current.page??1)-1}))}>Previous</button><span>Page {filters.page??1} of {pageCount}</span><button type="button" disabled={(filters.page??1)>=pageCount} onClick={()=>setFilters((current)=>({...current,page:(current.page??1)+1}))}>Next</button></div></div>
         </section>
       </div>
     </div>

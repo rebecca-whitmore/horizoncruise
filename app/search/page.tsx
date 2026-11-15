@@ -14,7 +14,7 @@ export default async function SearchPage() {
   try {
     [options, initial] = await Promise.all([
       getCruiseSearchOptions(),
-      searchCruises({ sort: "date", page: 1, perPage: 30 }),
+      searchCruises({ sort: "date", page: 1, perPage: 25 }),
     ]);
   } catch {
     console.error("Could not prepare the cruise search page.");

@@ -165,9 +165,11 @@ a { color: inherit; }
 .month-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; }
 .month-grid button { min-height: 2.1rem; border: 1px solid #cbd1cf; color: var(--ink); background: var(--paper); font: inherit; font-size: .72rem; cursor: pointer; }
 .month-grid button[aria-pressed="true"] { border-color: var(--sea); color: #fff; background: var(--sea); }
+.month-grid button:disabled { border-color: #dde1df; color: #9aa29f; background: #e8ebea; text-decoration: line-through; cursor: not-allowed; }
 .month-actions { display: grid; grid-template-columns: 1fr auto; gap: .5rem; margin-top: .75rem; }
 .month-actions button { min-height: 2.25rem; padding: .4rem .8rem; border: 1px solid var(--sea); color: #fff; background: var(--sea); font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer; }
 .month-actions button:last-child { color: var(--sea); background: transparent; }
+.reset-dates { margin-top: .75rem; padding: 0; border: 0; border-bottom: 1px solid currentColor; color: var(--sea); background: transparent; font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer; }
 .filter-help { margin: .65rem 0 0; color: var(--muted); font-size: .7rem; line-height: 1.45; }
 .check-row { display: flex; align-items: flex-start; gap: .6rem; color: var(--muted); font-size: .84rem; line-height: 1.35; cursor: pointer; }
 .check-row + .check-row { margin-top: .65rem; }
@@ -178,7 +180,7 @@ a { color: inherit; }
 .filter-actions button, .empty-results button { min-height: 2.8rem; border: 1px solid var(--sea); color: #fff; background: var(--sea); font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; }
 .filter-actions button:last-child { color: var(--sea); background: transparent; }
 .search-results { min-width: 0; }
-.results-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 1.5rem; min-height: 7rem; padding: 1.25rem 1.5rem; border: 1px solid var(--line); background: var(--paper-alt); }
+.results-toolbar { display: flex; align-items: end; justify-content: flex-end; gap: 1.5rem; min-height: 5.25rem; padding: 1.25rem 1.5rem; border: 1px solid var(--line); background: var(--paper-alt); }
 .results-toolbar .eyebrow { margin-bottom: .45rem; color: var(--gold-text); }
 .results-toolbar h2 { margin: 0; font: 500 2.15rem/1 Georgia, serif; }
 .toolbar-controls { display: flex; align-items: end; gap: .75rem; }
@@ -194,7 +196,6 @@ a { color: inherit; }
 .search-note, .search-error { margin: 1rem 0; padding: .8rem 1rem; border-left: 3px solid var(--gold); color: var(--muted); background: var(--paper-alt); font-size: .78rem; line-height: 1.5; }
 .search-error { border-color: var(--warning); color: var(--warning); }
 .cruise-results { display: grid; gap: 1.25rem; margin-top: 1.25rem; transition: opacity .18s ease; }
-.cruise-results.is-loading { opacity: .48; }
 .cruise-results.grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .cruise-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); background: #fff; }
 .cruise-card-media { position: relative; min-height: 230px; overflow: hidden; background: #e5e9e8; }
@@ -213,6 +214,13 @@ a { color: inherit; }
 .cruise-card dl div { min-width: 0; }
 .cruise-card dt { color: var(--muted); font-size: .6rem; letter-spacing: .06em; text-transform: uppercase; }
 .cruise-card dd { overflow: hidden; margin: .22rem 0 0; font-size: .73rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.cruise-card-skeleton { pointer-events: none; }
+.cruise-card-skeleton .cruise-card-media, .cruise-card-skeleton span, .cruise-card-skeleton strong { background: linear-gradient(90deg, #e4e8e6 25%, #f2f4f3 50%, #e4e8e6 75%); background-size: 200% 100%; animation: search-shimmer 1.25s infinite linear; }
+.cruise-card-skeleton .cruise-card-copy { display: grid; gap: .8rem; }
+.cruise-card-skeleton span, .cruise-card-skeleton strong { display: block; width: 45%; height: .75rem; }
+.cruise-card-skeleton strong { width: 82%; height: 1.6rem; }
+.cruise-card-skeleton span:last-child { width: 68%; }
+@keyframes search-shimmer { to { background-position: -200% 0; } }
 .cruise-results.list .cruise-card { display: grid; grid-template-columns: minmax(290px, 40%) minmax(0, 1fr); }
 .cruise-results.list .cruise-card-media { min-height: 275px; }
 .cruise-results.list .cruise-card-copy { display: flex; flex-direction: column; justify-content: center; padding: 2rem; }

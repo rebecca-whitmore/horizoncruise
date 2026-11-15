@@ -5,10 +5,13 @@ type RecordValue = Record<string, unknown>;
 
 export type CruiseOperator = { id: string; name: string };
 export type CruiseShip = { id: string; name: string; operatorId: string };
+export type CruiseDestination = { id: string; name: string };
+export type CruiseType = { id: string; name: string };
 export type CruiseSearchOptions = {
   operators: CruiseOperator[];
   ships: CruiseShip[];
-  destinations: string[];
+  destinations: CruiseDestination[];
+  types: CruiseType[];
   lastYear: number;
 };
 
@@ -71,6 +74,16 @@ function strings(value: unknown): string[] {
 function idFromUrl(value: unknown): string {
   const url = string(value);
   return url?.match(/\/([^/]+)\.json(?:\?|$)/)?.[1] ?? "";
+}
+
+function slug(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 function config() {
@@ -165,17 +178,21 @@ const getOptionsCached = unstable_cache(
       return request("holidays/dates.json", params);
     }));
     const sampleDates = samples.flatMap((payload) => Array.isArray(payload.dates) ? payload.dates : []);
-    const destinations = [...new Set(sampleDates.flatMap((value) => strings(record(value)?.regions)))];
+    const destinationNames = [...new Set(sampleDates.flatMap((value) => strings(record(value)?.regions)))];
+    const typeIds = [...new Set(sampleDates.flatMap((value) => strings(record(value)?.holiday_type)))];
     const years = sampleDates.map((value) => Number(string(record(value)?.date_from)?.slice(0, 4))).filter(Number.isFinite);
     const popular = ["Mediterranean", "Caribbean", "Alaska", "Northern Europe", "Norwegian Fjords", "Asia", "Australia & New Zealand", "South America", "Galapagos"];
-    destinations.sort((a, b) => {
+    destinationNames.sort((a, b) => {
       const ai = popular.indexOf(a); const bi = popular.indexOf(b);
       if (ai >= 0 || bi >= 0) return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
       return a.localeCompare(b);
     });
-    return { operators, ships, destinations, lastYear: Math.max(2029, ...years) };
+    const destinations = destinationNames.map((name) => ({ id: slug(name), name }));
+    const typeNames: Record<string, string> = { ocean_cruise: "Ocean cruises", river_cruise: "River cruises", expedition: "Expedition cruises", "cruise&stay": "Cruise and stay", river_cruise_and_stay: "River cruise and stay" };
+    const types = typeIds.filter((id) => typeNames[id]).map((id) => ({ id, name: typeNames[id] }));
+    return { operators, ships, destinations, types, lastYear: Math.max(2029, ...years) };
   },
-  ["widgety-search-options-v2"],
+  ["widgety-search-options-v3"],
   { revalidate: 3600 },
 );
 
@@ -200,9 +217,36 @@ export async function getCruiseSearchOptions(): Promise<CruiseSearchOptions> {
   return getOptionsCached();
 }
 
+export async function getAvailableCruiseMonths(year: number): Promise<string[]> {
+  if (!Number.isInteger(year) || year < new Date().getFullYear() || year > 2035) return [];
+  const cached = unstable_cache(
+    async () => {
+      const payloads = await Promise.all(Array.from({ length: 12 }, (_, index) => {
+        const month = index + 1;
+        const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+        const monthValue = String(month).padStart(2, "0");
+        const params = baseParams();
+        params.set("date_from", `${year}-${monthValue}-01`);
+        params.set("date_to", `${year}-${monthValue}-${lastDay}`);
+        params.set("limit", "1");
+        return request("holidays/dates.json", params);
+      }));
+      return payloads.flatMap((payload, index) => Number(payload.total ?? 0) > 0
+        ? [`${year}-${String(index + 1).padStart(2, "0")}`]
+        : []);
+    },
+    ["widgety-available-months", String(year)],
+    { revalidate: 21600 },
+  );
+  return cached();
+}
+
 export async function searchCruises(query: CruiseSearchQuery): Promise<CruiseSearchResponse> {
   const page = Math.max(1, query.page ?? 1);
   const perPage = [15, 25, 50].includes(query.perPage ?? 25) ? query.perPage ?? 25 : 25;
+  // Neither currently enabled operator is adults-only. Widgety exposes this
+  // classification on ships, not as a supported dated-sailing filter.
+  if (query.adultsOnly) return { results: [], total: 0, page, perPage };
   const start = (page - 1) * perPage;
   const firstUpstreamPage = Math.floor(start / 25) + 1;
   const lastUpstreamPage = Math.floor((start + perPage - 1) / 25) + 1;
@@ -212,15 +256,47 @@ export async function searchCruises(query: CruiseSearchQuery): Promise<CruiseSea
   else params.set("date_from", new Date().toISOString().slice(0, 10));
   if (query.operator) params.set("operators", query.operator);
   if (query.ship) params.set("ships", query.ship);
-  if (query.adultsOnly) params.set("themes", "Adults Only");
   if (query.destinations?.length) params.set("regions", query.destinations.join(","));
   query.types?.forEach((type) => params.append("holiday_types[]", type));
   const durations: Record<string, [number, number?]> = { short: [1, 5], medium: [6, 9], long: [10, 14], extended: [15] };
   const duration = query.duration ? durations[query.duration] : undefined;
-  if (duration) { params.set("duration_min", String(duration[0])); if (duration[1]) params.set("duration_max", String(duration[1])); }
+  if (duration) { params.set("duration_days_min", String(duration[0])); if (duration[1]) params.set("duration_days_max", String(duration[1])); }
   if (query.sort === "price-asc" || query.sort === "price-desc") {
     params.set("sort_price", query.sort === "price-asc" ? "asc" : "desc");
-    params.set("price_occ", "double");
+    params.set("price_occ", "2");
+  }
+
+  // Widgety accepts a continuous date range. For separate selected months,
+  // query each month independently so totals and pagination remain exact.
+  if (bounds && bounds.valid.length > 1) {
+    const end = page * perPage;
+    const monthParams = bounds.valid.map((value) => {
+      const [year, month] = value.split("-").map(Number);
+      const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+      const next = new URLSearchParams(params);
+      next.set("date_from", `${value}-01`);
+      next.set("date_to", `${value}-${lastDay}`);
+      next.set("page", "1");
+      next.set("limit", "25");
+      return next;
+    });
+    const firstPayloads = await Promise.all(monthParams.map((month) => request("holidays/dates.json", month)));
+    const totals = firstPayloads.map((payload) => Number(payload.total ?? 0));
+    const remainingPayloads = await Promise.all(monthParams.flatMap((month, monthIndex) => {
+      const pagesNeeded = Math.ceil(Math.min(totals[monthIndex], end) / 25);
+      return Array.from({ length: Math.max(0, pagesNeeded - 1) }, (_, index) => {
+        const next = new URLSearchParams(month);
+        next.set("page", String(index + 2));
+        return request("holidays/dates.json", next);
+      });
+    }));
+    const results = [...firstPayloads, ...remainingPayloads]
+      .flatMap((payload) => Array.isArray(payload.dates) ? payload.dates : [])
+      .map(mapDate).filter((item): item is CruiseResult => Boolean(item));
+    if (query.sort === "price-asc") results.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+    else if (query.sort === "price-desc") results.sort((a, b) => (b.price ?? -Infinity) - (a.price ?? -Infinity));
+    else results.sort((a, b) => a.dateFrom.localeCompare(b.dateFrom));
+    return { results: results.slice(start, end), total: totals.reduce((sum, total) => sum + total, 0), page, perPage };
   }
 
   const payloads = await Promise.all(Array.from({ length: lastUpstreamPage - firstUpstreamPage + 1 }, (_, index) => {
@@ -231,7 +307,6 @@ export async function searchCruises(query: CruiseSearchQuery): Promise<CruiseSea
   }));
   let results = payloads.flatMap((payload) => Array.isArray(payload.dates) ? payload.dates : [])
     .map(mapDate).filter((item): item is CruiseResult => Boolean(item));
-  if (bounds && bounds.valid.length > 1) results = results.filter((item) => bounds.valid.includes(item.dateFrom.slice(0, 7)));
   if (query.sort === "date") results.sort((a, b) => a.dateFrom.localeCompare(b.dateFrom));
   const offset = start - (firstUpstreamPage - 1) * 25;
   results = results.slice(offset, offset + perPage);

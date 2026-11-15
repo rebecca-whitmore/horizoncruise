@@ -142,6 +142,94 @@ a { color: inherit; }
 .article-body img { max-width: 100%; height: auto; }
 .article-body a { color: var(--sea); }
 
+/* Live cruise search. Kept separate from the temporary playground styles. */
+.cruise-search-page { min-height: 100svh; padding-bottom: 5rem; background: var(--paper); }
+.cruise-search-shell { width: min(1480px, calc(100% - 2.5rem)); margin-inline: auto; }
+.cruise-search-hero { margin-bottom: 2rem; padding: clamp(3rem, 7vw, 6.5rem) 0; color: #fff; background: linear-gradient(115deg, #103f44, var(--sea) 65%, #246970); }
+.cruise-search-hero .eyebrow { color: #e5c98d; }
+.cruise-search-hero h1 { margin: 0; font: 500 clamp(3.1rem, 7vw, 6rem)/.95 Georgia, serif; letter-spacing: -.045em; }
+.cruise-search-hero p:last-child { max-width: 650px; margin: 1.25rem 0 0; color: #edf3f2; font: 1.05rem/1.65 Georgia, serif; }
+.search-layout { display: grid; grid-template-columns: minmax(270px, .78fr) minmax(0, 2.22fr); gap: 1.5rem; align-items: start; }
+.search-filters { border: 1px solid var(--line); background: var(--paper-alt); }
+.filter-intro { padding: 1.5rem; border-bottom: 1px solid var(--line); }
+.filter-intro .eyebrow { margin-bottom: .7rem; color: var(--gold-text); }
+.filter-intro h2 { margin: 0; font: 500 2rem/1 Georgia, serif; }
+.filter-intro p:last-child { margin: .7rem 0 0; color: var(--muted); font-size: .84rem; }
+.filter-section { display: block; margin: 0 1.5rem; padding: 1.25rem 0; border: 0; border-bottom: 1px solid var(--line); }
+.filter-section h3, .filter-section legend, .filter-label { display: block; margin: 0 0 .8rem; padding: 0; color: var(--ink); font-size: .78rem; font-weight: 700; letter-spacing: .025em; }
+.filter-section select { width: 100%; min-height: 2.8rem; padding: .55rem .7rem; border: 1px solid #c6cecb; border-radius: 0; color: var(--ink); background: var(--paper); font: inherit; font-size: .86rem; }
+.filter-section select:focus-visible, .filter-section button:focus-visible, .results-toolbar select:focus-visible, .results-footer select:focus-visible { outline: 3px solid color-mix(in srgb, var(--gold) 62%, transparent); outline-offset: 2px; }
+.year-picker { display: grid; grid-template-columns: 2.2rem 1fr 2.2rem; align-items: center; margin-bottom: .7rem; text-align: center; }
+.year-picker button { width: 2.2rem; height: 2.2rem; border: 1px solid var(--line); color: var(--sea); background: var(--paper); font-size: 1.3rem; cursor: pointer; }
+.year-picker button:disabled { opacity: .35; cursor: default; }
+.month-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; }
+.month-grid button { min-height: 2.1rem; border: 1px solid #cbd1cf; color: var(--ink); background: var(--paper); font: inherit; font-size: .72rem; cursor: pointer; }
+.month-grid button[aria-pressed="true"] { border-color: var(--sea); color: #fff; background: var(--sea); }
+.month-actions { display: grid; grid-template-columns: 1fr auto; gap: .5rem; margin-top: .75rem; }
+.month-actions button { min-height: 2.25rem; padding: .4rem .8rem; border: 1px solid var(--sea); color: #fff; background: var(--sea); font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer; }
+.month-actions button:last-child { color: var(--sea); background: transparent; }
+.filter-help { margin: .65rem 0 0; color: var(--muted); font-size: .7rem; line-height: 1.45; }
+.check-row { display: flex; align-items: flex-start; gap: .6rem; color: var(--muted); font-size: .84rem; line-height: 1.35; cursor: pointer; }
+.check-row + .check-row { margin-top: .65rem; }
+.check-row input { flex: 0 0 auto; width: 1rem; height: 1rem; margin: .05rem 0 0; accent-color: var(--sea); }
+.show-more { margin-top: .8rem; padding: 0; border: 0; border-bottom: 1px solid currentColor; color: var(--sea); background: transparent; font: inherit; font-size: .76rem; font-weight: 700; cursor: pointer; }
+.adults-only { padding-inline: 0; }
+.filter-actions { display: grid; gap: .65rem; padding: 1.5rem; }
+.filter-actions button, .empty-results button { min-height: 2.8rem; border: 1px solid var(--sea); color: #fff; background: var(--sea); font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; }
+.filter-actions button:last-child { color: var(--sea); background: transparent; }
+.search-results { min-width: 0; }
+.results-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 1.5rem; min-height: 7rem; padding: 1.25rem 1.5rem; border: 1px solid var(--line); background: var(--paper-alt); }
+.results-toolbar .eyebrow { margin-bottom: .45rem; color: var(--gold-text); }
+.results-toolbar h2 { margin: 0; font: 500 2.15rem/1 Georgia, serif; }
+.toolbar-controls { display: flex; align-items: end; gap: .75rem; }
+.toolbar-controls label { display: grid; gap: .35rem; color: var(--muted); font-size: .72rem; }
+.results-toolbar select, .results-footer select { min-height: 2.65rem; padding: .45rem .7rem; border: 1px solid #c6cecb; color: var(--ink); background: var(--paper); font: inherit; }
+.view-toggle { display: flex; }
+.view-toggle button { width: 2.7rem; height: 2.7rem; border: 1px solid #c6cecb; color: var(--sea); background: var(--paper); font-size: 1.4rem; cursor: pointer; }
+.view-toggle button + button { border-left: 0; }
+.view-toggle button[aria-pressed="true"] { color: #fff; background: var(--sea); }
+.filter-chips { display: flex; flex-wrap: wrap; gap: .5rem; padding: 1rem 0; }
+.filter-chips button { display: inline-flex; align-items: center; gap: .55rem; min-height: 2rem; padding: .35rem .65rem; border: 1px solid #c7cecc; border-radius: 2rem; color: var(--sea); background: var(--paper-alt); font: inherit; font-size: .72rem; cursor: pointer; }
+.filter-chips button span:first-of-type { font-size: 1rem; }
+.search-note, .search-error { margin: 1rem 0; padding: .8rem 1rem; border-left: 3px solid var(--gold); color: var(--muted); background: var(--paper-alt); font-size: .78rem; line-height: 1.5; }
+.search-error { border-color: var(--warning); color: var(--warning); }
+.cruise-results { display: grid; gap: 1.25rem; margin-top: 1.25rem; transition: opacity .18s ease; }
+.cruise-results.is-loading { opacity: .48; }
+.cruise-results.grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cruise-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); background: #fff; }
+.cruise-card-media { position: relative; min-height: 230px; overflow: hidden; background: #e5e9e8; }
+.cruise-card-media img { object-fit: cover; transition: transform .45s ease; }
+.cruise-card:hover .cruise-card-media img { transform: scale(1.025); }
+.cruise-image-fallback { display: grid; place-items: center; height: 100%; color: var(--sea); font: 1.2rem Georgia, serif; }
+.cruise-card-copy { padding: 1.25rem; }
+.cruise-card-top { display: flex; justify-content: space-between; gap: 1rem; align-items: start; }
+.cruise-card-top > p:first-child { margin: 0; color: var(--gold-text); font-size: .69rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.cruise-price { flex: 0 0 auto; margin: 0; color: var(--sea); font-size: 1.25rem; font-weight: 700; text-align: right; }
+.cruise-price span { display: block; color: var(--muted); font-size: .58rem; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; }
+.cruise-price small { margin-left: .16rem; font-size: .58rem; text-transform: uppercase; }
+.cruise-card h3 { margin: 1rem 0 .45rem; font: 500 1.42rem/1.12 Georgia, serif; }
+.cruise-route { min-height: 2.4em; margin: 0 0 1rem; color: var(--muted); font-size: .76rem; line-height: 1.5; }
+.cruise-card dl { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; margin: 0; padding-top: 1rem; border-top: 1px solid var(--line); }
+.cruise-card dl div { min-width: 0; }
+.cruise-card dt { color: var(--muted); font-size: .6rem; letter-spacing: .06em; text-transform: uppercase; }
+.cruise-card dd { overflow: hidden; margin: .22rem 0 0; font-size: .73rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.cruise-results.list .cruise-card { display: grid; grid-template-columns: minmax(290px, 40%) minmax(0, 1fr); }
+.cruise-results.list .cruise-card-media { min-height: 275px; }
+.cruise-results.list .cruise-card-copy { display: flex; flex-direction: column; justify-content: center; padding: 2rem; }
+.cruise-results.list .cruise-card h3 { font-size: 2rem; }
+.cruise-results.list .cruise-card dl { grid-template-columns: repeat(4, 1fr); }
+.empty-results { grid-column: 1 / -1; padding: 4rem 2rem; border: 1px solid var(--line); text-align: center; background: var(--paper-alt); }
+.empty-results h3 { margin: 0; font: 500 2rem Georgia, serif; }
+.empty-results p { color: var(--muted); }
+.empty-results button { margin-top: .75rem; padding: .65rem 1rem; }
+.results-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.25rem; padding: 1rem 1.25rem; border: 1px solid var(--line); background: var(--paper-alt); }
+.results-footer label { display: flex; align-items: center; gap: .5rem; color: var(--muted); font-size: .76rem; }
+.results-footer select { min-height: 2.2rem; }
+.pagination { display: flex; align-items: center; gap: .8rem; color: var(--muted); font-size: .76rem; }
+.pagination button { min-height: 2.3rem; padding: .45rem .7rem; border: 1px solid var(--sea); color: var(--sea); background: transparent; font: inherit; font-weight: 700; cursor: pointer; }
+.pagination button:disabled { opacity: .35; cursor: default; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
 @media (max-width: 760px) {
   .site-header { align-items: flex-start; padding-block: 1.25rem; }
   .site-nav { flex-wrap: wrap; justify-content: flex-end; gap: .65rem 1rem; }
@@ -158,4 +246,16 @@ a { color: inherit; }
   .holiday-filter-panel { position: static; }
   .holiday-results-heading { align-items: flex-start; flex-direction: column; }
   .holiday-results-heading > p { max-width: none; text-align: left; }
+  .cruise-search-shell { width: min(100% - 1.25rem, 1480px); }
+  .search-layout { grid-template-columns: 1fr; }
+  .results-toolbar { align-items: stretch; flex-direction: column; }
+  .toolbar-controls { align-items: stretch; flex-direction: column; }
+  .view-toggle { align-self: flex-end; }
+  .cruise-results.grid { grid-template-columns: 1fr; }
+  .cruise-results.list .cruise-card { grid-template-columns: 1fr; }
+  .cruise-results.list .cruise-card-copy { padding: 1.25rem; }
+  .cruise-results.list .cruise-card h3 { font-size: 1.55rem; }
+  .cruise-results.list .cruise-card dl { grid-template-columns: repeat(2, 1fr); }
+  .results-footer { align-items: stretch; flex-direction: column; }
+  .pagination { justify-content: space-between; }
 }

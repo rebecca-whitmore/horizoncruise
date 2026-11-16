@@ -1,7 +1,7 @@
 {
     "@meta": {
         "version": "3.3.9.2",
-        "build": 1794867999
+        "build": 1794870240
     },
     "settings": {
         "types_only": "0",
@@ -1037,7 +1037,10 @@
                             "pick_user_role": "Administrator",
                             "pick_sync_taxonomy": "0",
                             "pick_sync_taxonomy_hide_taxonomy_ui": "0",
-                            "pick_post_status": "publish",
+                            "pick_post_status": [
+                                "publish",
+                                "draft"
+                            ],
                             "pick_post_author": "0",
                             "repeatable": "0",
                             "repeatable_format": "default",

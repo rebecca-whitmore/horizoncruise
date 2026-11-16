@@ -1,7 +1,7 @@
 {
     "@meta": {
         "version": "3.3.9.2",
-        "build": 1794864786
+        "build": 1794866082
     },
     "settings": {
         "types_only": "0",
@@ -64,7 +64,7 @@
                             "default_evaluate_tags": "0",
                             "default_empty_fields": "0",
                             "roles_allowed": "administrator",
-                            "revisions_revision_field": "0",
+                            "revisions_revision_field": "1",
                             "enable_conditional_logic": "0",
                             "conditional_logic_save_value": "0",
                             "rest_pick_response": "array",
@@ -72,7 +72,14 @@
                             "required": "0",
                             "rest_read": "1",
                             "paragraph_allowed_html_tags": "strong em a ul ol li b i",
-                            "paragraph_max_length": "-1"
+                            "paragraph_max_length": "-1",
+                            "logged_in_only": "0",
+                            "admin_only": "0",
+                            "restrict_role": "0",
+                            "restrict_capability": "0",
+                            "hidden": "0",
+                            "read_only": "0",
+                            "read_only_restricted": "0"
                         },
                         {
                             "name": "full_overview",
@@ -87,13 +94,20 @@
                             "default_evaluate_tags": "0",
                             "default_empty_fields": "0",
                             "roles_allowed": "administrator",
-                            "revisions_revision_field": "0",
+                            "revisions_revision_field": "1",
                             "enable_conditional_logic": "0",
                             "conditional_logic_save_value": "0",
                             "rest_pick_response": "array",
                             "rest_pick_depth": "1",
                             "required": "0",
-                            "rest_read": "1"
+                            "rest_read": "1",
+                            "logged_in_only": "0",
+                            "admin_only": "0",
+                            "restrict_role": "0",
+                            "restrict_capability": "0",
+                            "hidden": "0",
+                            "read_only": "0",
+                            "read_only_restricted": "0"
                         },
                         {
                             "name": "logo",
@@ -284,7 +298,7 @@
                             "default_evaluate_tags": "0",
                             "default_empty_fields": "0",
                             "roles_allowed": "administrator",
-                            "revisions_revision_field": "0",
+                            "revisions_revision_field": "1",
                             "enable_conditional_logic": "0",
                             "conditional_logic_save_value": "0",
                             "rest_pick_response": "array",
@@ -302,7 +316,14 @@
                             "wysiwyg_convert_chars": "1",
                             "wysiwyg_wpautop": "1",
                             "wysiwyg_allow_shortcode": "0",
-                            "rest_read": "1"
+                            "rest_read": "1",
+                            "logged_in_only": "0",
+                            "admin_only": "0",
+                            "restrict_role": "0",
+                            "restrict_capability": "0",
+                            "hidden": "0",
+                            "read_only": "0",
+                            "read_only_restricted": "0"
                         },
                         {
                             "name": "images",
@@ -362,13 +383,20 @@
                             "default_evaluate_tags": "0",
                             "default_empty_fields": "0",
                             "roles_allowed": "administrator",
-                            "revisions_revision_field": "0",
+                            "revisions_revision_field": "1",
                             "enable_conditional_logic": "0",
                             "conditional_logic_save_value": "0",
                             "rest_pick_response": "array",
                             "rest_pick_depth": "1",
                             "required": "0",
-                            "rest_read": "1"
+                            "rest_read": "1",
+                            "logged_in_only": "0",
+                            "admin_only": "0",
+                            "restrict_role": "0",
+                            "restrict_capability": "0",
+                            "hidden": "0",
+                            "read_only": "0",
+                            "read_only_restricted": "0"
                         }
                     ]
                 }
@@ -453,13 +481,20 @@
                             "default_evaluate_tags": "0",
                             "default_empty_fields": "0",
                             "roles_allowed": "administrator",
-                            "revisions_revision_field": "0",
+                            "revisions_revision_field": "1",
                             "enable_conditional_logic": "0",
                             "conditional_logic_save_value": "0",
                             "rest_pick_response": "array",
                             "rest_pick_depth": "1",
                             "required": "0",
-                            "rest_read": "1"
+                            "rest_read": "1",
+                            "logged_in_only": "0",
+                            "admin_only": "0",
+                            "restrict_role": "0",
+                            "restrict_capability": "0",
+                            "hidden": "0",
+                            "read_only": "0",
+                            "read_only_restricted": "0"
                         },
                         {
                             "name": "full_overview",
@@ -474,13 +509,20 @@
                             "default_evaluate_tags": "0",
                             "default_empty_fields": "0",
                             "roles_allowed": "administrator",
-                            "revisions_revision_field": "0",
+                            "revisions_revision_field": "1",
                             "enable_conditional_logic": "0",
                             "conditional_logic_save_value": "0",
                             "rest_pick_response": "array",
                             "rest_pick_depth": "1",
                             "required": "0",
-                            "rest_read": "1"
+                            "rest_read": "1",
+                            "logged_in_only": "0",
+                            "admin_only": "0",
+                            "restrict_role": "0",
+                            "restrict_capability": "0",
+                            "hidden": "0",
+                            "read_only": "0",
+                            "read_only_restricted": "0"
                         },
                         {
                             "name": "main_photograph",
@@ -533,13 +575,20 @@
                             "default_evaluate_tags": "0",
                             "default_empty_fields": "0",
                             "roles_allowed": "administrator",
-                            "revisions_revision_field": "0",
+                            "revisions_revision_field": "1",
                             "enable_conditional_logic": "0",
                             "conditional_logic_save_value": "0",
                             "rest_pick_response": "array",
                             "rest_pick_depth": "1",
                             "required": "0",
-                            "rest_read": "1"
+                            "rest_read": "1",
+                            "logged_in_only": "0",
+                            "admin_only": "0",
+                            "restrict_role": "0",
+                            "restrict_capability": "0",
+                            "hidden": "0",
+                            "read_only": "0",
+                            "read_only_restricted": "0"
                         },
                         {
                             "name": "dining",
@@ -554,13 +603,20 @@
                             "default_evaluate_tags": "0",
                             "default_empty_fields": "0",
                             "roles_allowed": "administrator",
-                            "revisions_revision_field": "0",
+                            "revisions_revision_field": "1",
                             "enable_conditional_logic": "0",
                             "conditional_logic_save_value": "0",
                             "rest_pick_response": "array",
                             "rest_pick_depth": "1",
                             "required": "0",
-                            "rest_read": "1"
+                            "rest_read": "1",
+                            "logged_in_only": "0",
+                            "admin_only": "0",
+                            "restrict_role": "0",
+                            "restrict_capability": "0",
+                            "hidden": "0",
+                            "read_only": "0",
+                            "read_only_restricted": "0"
                         },
                         {
                             "name": "entertainment",
@@ -575,13 +631,20 @@
                             "default_evaluate_tags": "0",
                             "default_empty_fields": "0",
                             "roles_allowed": "administrator",
-                            "revisions_revision_field": "0",
+                            "revisions_revision_field": "1",
                             "enable_conditional_logic": "0",
                             "conditional_logic_save_value": "0",
                             "rest_pick_response": "array",
                             "rest_pick_depth": "1",
                             "required": "0",
-                            "rest_read": "1"
+                            "rest_read": "1",
+                            "logged_in_only": "0",
+                            "admin_only": "0",
+                            "restrict_role": "0",
+                            "restrict_capability": "0",
+                            "hidden": "0",
+                            "read_only": "0",
+                            "read_only_restricted": "0"
                         },
                         {
                             "name": "health_fitness",
@@ -596,13 +659,20 @@
                             "default_evaluate_tags": "0",
                             "default_empty_fields": "0",
                             "roles_allowed": "administrator",
-                            "revisions_revision_field": "0",
+                            "revisions_revision_field": "1",
                             "enable_conditional_logic": "0",
                             "conditional_logic_save_value": "0",
                             "rest_pick_response": "array",
                             "rest_pick_depth": "1",
                             "required": "0",
-                            "rest_read": "1"
+                            "rest_read": "1",
+                            "logged_in_only": "0",
+                            "admin_only": "0",
+                            "restrict_role": "0",
+                            "restrict_capability": "0",
+                            "hidden": "0",
+                            "read_only": "0",
+                            "read_only_restricted": "0"
                         },
                         {
                             "name": "younger_travellers",
@@ -617,13 +687,20 @@
                             "default_evaluate_tags": "0",
                             "default_empty_fields": "0",
                             "roles_allowed": "administrator",
-                            "revisions_revision_field": "0",
+                            "revisions_revision_field": "1",
                             "enable_conditional_logic": "0",
                             "conditional_logic_save_value": "0",
                             "rest_pick_response": "array",
                             "rest_pick_depth": "1",
                             "required": "0",
-                            "rest_read": "1"
+                            "rest_read": "1",
+                            "logged_in_only": "0",
+                            "admin_only": "0",
+                            "restrict_role": "0",
+                            "restrict_capability": "0",
+                            "hidden": "0",
+                            "read_only": "0",
+                            "read_only_restricted": "0"
                         },
                         {
                             "name": "enrichment",
@@ -638,13 +715,20 @@
                             "default_evaluate_tags": "0",
                             "default_empty_fields": "0",
                             "roles_allowed": "administrator",
-                            "revisions_revision_field": "0",
+                            "revisions_revision_field": "1",
                             "enable_conditional_logic": "0",
                             "conditional_logic_save_value": "0",
                             "rest_pick_response": "array",
                             "rest_pick_depth": "1",
                             "required": "0",
-                            "rest_read": "1"
+                            "rest_read": "1",
+                            "logged_in_only": "0",
+                            "admin_only": "0",
+                            "restrict_role": "0",
+                            "restrict_capability": "0",
+                            "hidden": "0",
+                            "read_only": "0",
+                            "read_only_restricted": "0"
                         },
                         {
                             "name": "deckplans",
@@ -655,7 +739,7 @@
                             "type": "file",
                             "file_format_type": "multi",
                             "file_uploader": "attachment",
-                            "file_type": "any",
+                            "file_type": "other",
                             "file_attachment_tab": "upload",
                             "file_attachment_current_post_only": "0",
                             "file_upload_dir": "wp",
@@ -682,7 +766,8 @@
                             "rest_pick_response": "array",
                             "rest_pick_depth": "1",
                             "required": "0",
-                            "rest_read": "1"
+                            "rest_read": "1",
+                            "file_allowed_extensions": "jpg,jpeg,png,gif,webp,pdf"
                         },
                         {
                             "name": "gallery",

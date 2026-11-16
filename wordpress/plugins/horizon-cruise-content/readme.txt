@@ -4,7 +4,7 @@ Tags: headless, custom post types, cruise
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.3.1
+Stable tag: 0.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,13 +49,21 @@ The standard WordPress REST permissions apply to drafts and private records.
 
 == CSV Import ==
 
-Administrators can open Tools > Horizon Cruise Import to validate, preview and import Cruise Lines or Ships from UTF-8 CSV files. Pods must be active.
+Administrators can open Tools > Horizon Cruise Import to validate, preview and import Cruise Lines, Ships, Ship Features or Featured Journeys from UTF-8 CSV files. Pods must be active.
 
 The importer matches only on a permanent private import key. New records are drafts, existing publication statuses are retained, and blank or omitted fields preserve existing values. Media is not imported in this version.
 
 Templates and a clearly labelled fictional test dataset are bundled with the plugin.
 
+Featured Journey ship keys use a pipe delimiter, for example `ship-one|ship-two`.
+
 == Changelog ==
+
+= 0.4.0 =
+
+* Extended the preview-first CSV importer to Ship Features and Featured Journeys.
+* Added relationship, Section, price, currency and ISO date validation.
+* Added templates and fictional test data for both content types.
 
 = 0.3.1 =
 

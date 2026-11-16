@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Imports Cruise Lines and Ships from validated CSV files.
+ * Imports Horizon Cruise structured content from validated CSV files.
  */
 final class Horizon_Cruise_CSV_Importer {
 	const IMPORT_KEY_META = '_horizon_cruise_import_key';
@@ -51,15 +51,16 @@ final class Horizon_Cruise_CSV_Importer {
 	private static function definitions() {
 		return array(
 			'cruise_line' => array(
-				'label'  => __( 'Cruise Lines', 'horizon-cruise-content' ),
-				'fields' => array(
+				'label'         => __( 'Cruise Lines', 'horizon-cruise-content' ),
+				'fields'        => array(
 					'short_introduction' => 'paragraph',
 					'full_overview'       => 'wysiwyg',
 				),
+				'relationships' => array(),
 			),
 			'ship'        => array(
-				'label'  => __( 'Ships', 'horizon-cruise-content' ),
-				'fields' => array(
+				'label'         => __( 'Ships', 'horizon-cruise-content' ),
+				'fields'        => array(
 					'short_introduction' => 'paragraph',
 					'full_overview'       => 'wysiwyg',
 					'staterooms'          => 'wysiwyg',
@@ -68,6 +69,58 @@ final class Horizon_Cruise_CSV_Importer {
 					'health_fitness'      => 'wysiwyg',
 					'younger_travellers'  => 'wysiwyg',
 					'enrichment'           => 'wysiwyg',
+				),
+				'relationships' => array(
+					'cruise_line_import_key' => array(
+						'field'    => 'cruise_line',
+						'target'   => 'cruise_line',
+						'multiple' => false,
+					),
+				),
+			),
+			'ship_feature' => array(
+				'label'         => __( 'Ship Features', 'horizon-cruise-content' ),
+				'fields'        => array(
+					'section'       => 'pick',
+					'description'   => 'wysiwyg',
+					'display_order' => 'number',
+				),
+				'relationships' => array(
+					'ship_import_key' => array(
+						'field'    => 'ship',
+						'target'   => 'ship',
+						'multiple' => false,
+					),
+				),
+			),
+			'featured_journey' => array(
+				'label'         => __( 'Featured Journeys', 'horizon-cruise-content' ),
+				'fields'        => array(
+					'headline'                  => 'paragraph',
+					'journey_overview'          => 'wysiwyg',
+					'duration'                  => 'text',
+					'dates'                     => 'text',
+					'travelling_from'           => 'wysiwyg',
+					'inclusions'                => 'wysiwyg',
+					'personalise_this_holiday' => 'wysiwyg',
+					'from_price'                => 'number',
+					'currency'                  => 'text',
+					'pricing_basis'             => 'paragraph',
+					'price_checked_date'        => 'date',
+					'availability_note'         => 'paragraph',
+					'itinerary'                 => 'wysiwyg',
+				),
+				'relationships' => array(
+					'cruise_line_import_key' => array(
+						'field'    => 'cruise_line',
+						'target'   => 'cruise_line',
+						'multiple' => false,
+					),
+					'ship_import_keys' => array(
+						'field'    => 'ships',
+						'target'   => 'ship',
+						'multiple' => true,
+					),
 				),
 			),
 		);
@@ -88,7 +141,7 @@ final class Horizon_Cruise_CSV_Importer {
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Horizon Cruise CSV Import', 'horizon-cruise-content' ); ?></h1>
-			<p><?php esc_html_e( 'Import Cruise Lines or Ships. Every import is validated and previewed before any records are changed.', 'horizon-cruise-content' ); ?></p>
+			<p><?php esc_html_e( 'Import Horizon Cruise structured content. Every import is validated and previewed before any records are changed.', 'horizon-cruise-content' ); ?></p>
 			<?php if ( ! function_exists( 'pods' ) ) : ?>
 				<div class="notice notice-error"><p><?php esc_html_e( 'Pods must be active before this importer can save structured fields.', 'horizon-cruise-content' ); ?></p></div>
 			<?php elseif ( is_array( $state ) && isset( $state['stage'] ) && 'preview' === $state['stage'] ) : ?>
@@ -242,10 +295,8 @@ final class Horizon_Cruise_CSV_Importer {
 			return new WP_Error( 'missing_import_key', __( 'The CSV must contain an import_key column.', 'horizon-cruise-content' ) );
 		}
 
-		$allowed = array_merge( array( 'import_key', 'title' ), array_keys( self::definitions()[ $post_type ]['fields'] ) );
-		if ( 'ship' === $post_type ) {
-			$allowed[] = 'cruise_line_import_key';
-		}
+		$definition = self::definitions()[ $post_type ];
+		$allowed    = array_merge( array( 'import_key', 'title' ), array_keys( $definition['fields'] ), array_keys( $definition['relationships'] ) );
 		$unknown = array_diff( $headers, $allowed );
 		if ( $unknown ) {
 			fclose( $handle );
@@ -324,22 +375,10 @@ final class Horizon_Cruise_CSV_Importer {
 				$errors[] = __( 'A non-blank title is required when creating a new record.', 'horizon-cruise-content' );
 			}
 
-			$relationship_id = 0;
-			if ( 'ship' === $post_type && array_key_exists( 'cruise_line_import_key', $row ) && '' !== trim( (string) $row['cruise_line_import_key'] ) ) {
-				$line_key     = self::sanitize_import_key( $row['cruise_line_import_key'] );
-				$line_matches = self::find_by_import_key( 'cruise_line', $line_key );
-				if ( 1 !== count( $line_matches ) ) {
-					$errors[] = 0 === count( $line_matches )
-						? __( 'cruise_line_import_key does not match an existing Cruise Line.', 'horizon-cruise-content' )
-						: __( 'cruise_line_import_key matches multiple Cruise Lines and is ambiguous.', 'horizon-cruise-content' );
-				} else {
-					$relationship_id = (int) $line_matches[0];
-				}
-			} elseif ( 'ship' === $post_type && ! $post_id ) {
-				$errors[] = __( 'A valid cruise_line_import_key is required when creating a new Ship.', 'horizon-cruise-content' );
-			}
+			$relationships = self::validate_relationships( $post_type, $row, $post_id, $errors );
+			self::validate_field_values( $post_type, $row, $errors );
 
-			$action = $post_id ? self::proposed_action( $post_type, $post_id, $row, $relationship_id ) : 'create';
+			$action = $post_id ? self::proposed_action( $post_type, $post_id, $row, $relationships ) : 'create';
 			if ( $errors ) {
 				$action = 'failed';
 			}
@@ -348,7 +387,7 @@ final class Horizon_Cruise_CSV_Importer {
 				'line'            => isset( $row['_line'] ) ? (int) $row['_line'] : $index + 2,
 				'import_key'      => $key,
 				'post_id'         => $post_id,
-				'relationship_id' => $relationship_id,
+				'relationships'   => $relationships,
 				'action'          => $action,
 				'errors'          => $errors,
 			);
@@ -358,22 +397,127 @@ final class Horizon_Cruise_CSV_Importer {
 	}
 
 	/**
+	 * Resolves every supplied relationship key before a row can be written.
+	 *
+	 * Blank relationship cells preserve existing values. New records require all
+	 * configured relationships so they cannot be created as orphans.
+	 *
+	 * @param string $post_type Post type being imported.
+	 * @param array  $row       Parsed CSV row.
+	 * @param int    $post_id   Existing post ID, or zero for a new record.
+	 * @param array  $errors    Validation errors passed by reference.
+	 * @return array
+	 */
+	private static function validate_relationships( $post_type, $row, $post_id, &$errors ) {
+		$resolved = array();
+		foreach ( self::definitions()[ $post_type ]['relationships'] as $column => $relationship ) {
+			$raw_value = isset( $row[ $column ] ) ? trim( (string) $row[ $column ] ) : '';
+			if ( '' === $raw_value ) {
+				if ( ! $post_id ) {
+					$errors[] = sprintf( __( '%s is required when creating a new record.', 'horizon-cruise-content' ), $column );
+				}
+				continue;
+			}
+
+			$keys = $relationship['multiple'] ? explode( '|', $raw_value ) : array( $raw_value );
+			$keys = array_map( array( __CLASS__, 'sanitize_import_key' ), $keys );
+			if ( in_array( '', $keys, true ) ) {
+				$errors[] = sprintf( __( '%s contains an empty relationship key.', 'horizon-cruise-content' ), $column );
+				continue;
+			}
+			if ( count( $keys ) !== count( array_unique( $keys ) ) ) {
+				$errors[] = sprintf( __( '%s contains a duplicate relationship key.', 'horizon-cruise-content' ), $column );
+				continue;
+			}
+
+			$ids = array();
+			foreach ( $keys as $key ) {
+				$matches = self::find_by_import_key( $relationship['target'], $key, true );
+				if ( 1 !== count( $matches ) ) {
+					$errors[] = 0 === count( $matches )
+						? sprintf( __( '%1$s key "%2$s" does not match an existing %3$s record.', 'horizon-cruise-content' ), $column, $key, $relationship['target'] )
+						: sprintf( __( '%1$s key "%2$s" is ambiguous because it matches multiple %3$s records.', 'horizon-cruise-content' ), $column, $key, $relationship['target'] );
+					continue;
+				}
+				$ids[] = (int) $matches[0];
+			}
+
+			if ( count( $ids ) === count( $keys ) ) {
+				$resolved[ $relationship['field'] ] = $relationship['multiple'] ? $ids : $ids[0];
+			}
+		}
+
+		return $resolved;
+	}
+
+	/**
+	 * Validates type-specific non-relationship values before any row is written.
+	 *
+	 * @param string $post_type Post type being imported.
+	 * @param array  $row       Parsed CSV row.
+	 * @param array  $errors    Validation errors passed by reference.
+	 * @return void
+	 */
+	private static function validate_field_values( $post_type, $row, &$errors ) {
+		if ( 'ship_feature' === $post_type ) {
+			if ( isset( $row['section'] ) && '' !== trim( (string) $row['section'] ) && ! in_array( trim( (string) $row['section'] ), self::ship_feature_sections(), true ) ) {
+				$errors[] = __( 'section must be one of: staterooms, dining, entertainment, health_fitness, younger_travellers, enrichment.', 'horizon-cruise-content' );
+			}
+			if ( isset( $row['display_order'] ) && '' !== trim( (string) $row['display_order'] ) && ! preg_match( '/^\d+$/', trim( (string) $row['display_order'] ) ) ) {
+				$errors[] = __( 'display_order must be a non-negative whole number.', 'horizon-cruise-content' );
+			}
+		}
+
+		if ( 'featured_journey' === $post_type ) {
+			if ( isset( $row['from_price'] ) && '' !== trim( (string) $row['from_price'] ) && ( ! is_numeric( trim( (string) $row['from_price'] ) ) || (float) $row['from_price'] < 0 ) ) {
+				$errors[] = __( 'from_price must be a non-negative number.', 'horizon-cruise-content' );
+			}
+			if ( isset( $row['currency'] ) && '' !== trim( (string) $row['currency'] ) && ! preg_match( '/^[A-Za-z]{3}$/', trim( (string) $row['currency'] ) ) ) {
+				$errors[] = __( 'currency must be a three-letter code such as GBP.', 'horizon-cruise-content' );
+			}
+			if ( isset( $row['price_checked_date'] ) && '' !== trim( (string) $row['price_checked_date'] ) && ! self::is_valid_iso_date( trim( (string) $row['price_checked_date'] ) ) ) {
+				$errors[] = __( 'price_checked_date must be a valid date in YYYY-MM-DD format.', 'horizon-cruise-content' );
+			}
+		}
+	}
+
+	/**
+	 * Returns the six values configured in the exported Ship Feature Pod.
+	 *
+	 * @return array
+	 */
+	private static function ship_feature_sections() {
+		return array( 'staterooms', 'dining', 'entertainment', 'health_fitness', 'younger_travellers', 'enrichment' );
+	}
+
+	/**
+	 * Validates an exact calendar date in YYYY-MM-DD format.
+	 *
+	 * @param string $value Date value.
+	 * @return bool
+	 */
+	private static function is_valid_iso_date( $value ) {
+		$date = DateTime::createFromFormat( '!Y-m-d', $value );
+		return $date && $date->format( 'Y-m-d' ) === $value;
+	}
+
+	/**
 	 * Determines whether an existing record would change.
 	 *
 	 * @param string $post_type      Post type.
 	 * @param int    $post_id        Existing post ID.
 	 * @param array  $row            CSV row.
-	 * @param int    $relationship_id Resolved Cruise Line ID.
+	 * @param array  $relationships Resolved relationship IDs keyed by Pods field.
 	 * @return string
 	 */
-	private static function proposed_action( $post_type, $post_id, $row, $relationship_id ) {
+	private static function proposed_action( $post_type, $post_id, $row, $relationships ) {
 		if ( isset( $row['title'] ) && '' !== trim( (string) $row['title'] ) && ! self::values_are_equivalent( get_post_field( 'post_title', $post_id, 'raw' ), self::sanitize_title_value( $row['title'] ), 'text' ) ) {
 			return 'update';
 		}
 
 		foreach ( self::definitions()[ $post_type ]['fields'] as $field => $field_type ) {
 			if ( isset( $row[ $field ] ) && '' !== trim( (string) $row[ $field ] ) ) {
-				$new_value = self::sanitize_field_value( $row[ $field ], $field_type );
+				$new_value = self::sanitize_field_value( $row[ $field ], $field_type, $field );
 				$old_value = self::get_pod_field_value( $post_type, $post_id, $field );
 				if ( ! self::values_are_equivalent( $old_value, $new_value, $field_type ) ) {
 					return 'update';
@@ -381,8 +525,11 @@ final class Horizon_Cruise_CSV_Importer {
 			}
 		}
 
-		if ( 'ship' === $post_type && $relationship_id && self::get_relationship_id( $post_type, $post_id, 'cruise_line' ) !== $relationship_id ) {
-			return 'update';
+		foreach ( $relationships as $field => $ids ) {
+			$stored_ids = self::get_relationship_ids( $post_type, $post_id, $field );
+			if ( $stored_ids !== self::normalize_relationship_ids( $ids ) ) {
+				return 'update';
+			}
 		}
 
 		return 'unchanged';
@@ -417,15 +564,18 @@ final class Horizon_Cruise_CSV_Importer {
 			$pod_data  = array();
 			foreach ( self::definitions()[ $post_type ]['fields'] as $field => $field_type ) {
 				if ( isset( $row[ $field ] ) && '' !== trim( (string) $row[ $field ] ) ) {
-					$new_value = self::sanitize_field_value( $row[ $field ], $field_type );
+					$new_value = self::sanitize_field_value( $row[ $field ], $field_type, $field );
 					if ( $is_create || ! self::values_are_equivalent( self::get_pod_field_value( $post_type, $post_id, $field ), $new_value, $field_type ) ) {
 						$pod_data[ $field ] = $new_value;
 					}
 				}
 			}
-			$relationship_changed = 'ship' === $post_type && $check['relationship_id'] && ( $is_create || self::get_relationship_id( $post_type, $post_id, 'cruise_line' ) !== (int) $check['relationship_id'] );
-			if ( $relationship_changed ) {
-				$pod_data['cruise_line'] = $check['relationship_id'];
+			$changed_relationships = array();
+			foreach ( $check['relationships'] as $field => $ids ) {
+				if ( $is_create || self::get_relationship_ids( $post_type, $post_id, $field ) !== self::normalize_relationship_ids( $ids ) ) {
+					$changed_relationships[ $field ] = $ids;
+					$pod_data[ $field ]              = $ids;
+				}
 			}
 			$title_changed = isset( $row['title'] ) && '' !== trim( (string) $row['title'] ) && ( $is_create || ! self::values_are_equivalent( get_post_field( 'post_title', $post_id, 'raw' ), self::sanitize_title_value( $row['title'] ), 'text' ) );
 
@@ -471,13 +621,16 @@ final class Horizon_Cruise_CSV_Importer {
 				}
 			}
 
-			if ( $relationship_changed && self::get_relationship_id( $post_type, $post_id, 'cruise_line' ) !== (int) $check['relationship_id'] ) {
-				$relationship_pod   = pods( $post_type, $post_id );
-				$relationship_saved = $relationship_pod ? $relationship_pod->save( 'cruise_line', (int) $check['relationship_id'] ) : false;
-				if ( false === $relationship_saved || self::get_relationship_id( $post_type, $post_id, 'cruise_line' ) !== (int) $check['relationship_id'] ) {
-					++$report['failed'];
-					$report['rows'][] = array_merge( $check, array( 'action' => 'failed', 'message' => __( 'Pods did not retain the Cruise Line relationship. Check that the relationship field allows draft Cruise Lines.', 'horizon-cruise-content' ) ) );
-					continue;
+			foreach ( $changed_relationships as $field => $ids ) {
+				$expected_ids = self::normalize_relationship_ids( $ids );
+				if ( self::get_relationship_ids( $post_type, $post_id, $field ) !== $expected_ids ) {
+					$relationship_pod   = pods( $post_type, $post_id );
+					$relationship_saved = $relationship_pod ? $relationship_pod->save( $field, $ids ) : false;
+					if ( false === $relationship_saved || self::get_relationship_ids( $post_type, $post_id, $field ) !== $expected_ids ) {
+						++$report['failed'];
+						$report['rows'][] = array_merge( $check, array( 'action' => 'failed', 'message' => sprintf( __( 'Pods did not retain the %s relationship. Check that its relationship field allows draft targets.', 'horizon-cruise-content' ), $field ) ) );
+						continue 2;
+					}
 				}
 			}
 
@@ -501,15 +654,16 @@ final class Horizon_Cruise_CSV_Importer {
 	/**
 	 * Finds records exclusively by the private import key.
 	 *
-	 * @param string $post_type Post type.
-	 * @param string $key       Import key.
+	 * @param string $post_type          Post type.
+	 * @param string $key                Import key.
+	 * @param bool   $relationship_target Whether only selectable draft/published targets should match.
 	 * @return array
 	 */
-	private static function find_by_import_key( $post_type, $key ) {
+	private static function find_by_import_key( $post_type, $key, $relationship_target = false ) {
 		return get_posts(
 			array(
 				'post_type'      => $post_type,
-				'post_status'    => array( 'draft', 'publish' ),
+				'post_status'    => $relationship_target ? array( 'draft', 'publish' ) : array( 'draft', 'publish', 'pending', 'private', 'future' ),
 				'posts_per_page' => 2,
 				'fields'         => 'ids',
 				'no_found_rows'  => true,
@@ -626,12 +780,19 @@ final class Horizon_Cruise_CSV_Importer {
 	 *
 	 * @param mixed  $value Raw field value.
 	 * @param string $type  Field type.
+	 * @param string $field Optional field name for field-specific normalization.
 	 * @return string
 	 */
-	private static function sanitize_field_value( $value, $type ) {
+	private static function sanitize_field_value( $value, $type, $field = '' ) {
 		$value = (string) $value;
 		if ( in_array( $type, array( 'paragraph', 'wysiwyg' ), true ) ) {
 			return wp_kses_post( $value );
+		}
+		if ( 'number' === $type ) {
+			return trim( $value );
+		}
+		if ( 'currency' === $field ) {
+			return strtoupper( sanitize_text_field( $value ) );
 		}
 		return sanitize_text_field( $value );
 	}
@@ -650,35 +811,61 @@ final class Horizon_Cruise_CSV_Importer {
 	}
 
 	/**
-	 * Reads a single Pods relationship defensively as an integer ID.
+	 * Reads a Pods relationship defensively as an ordered list of integer IDs.
 	 *
 	 * @param string $post_type Post type.
 	 * @param int    $post_id   Post ID.
 	 * @param string $field     Relationship field name.
-	 * @return int
+	 * @return array
 	 */
-	private static function get_relationship_id( $post_type, $post_id, $field ) {
+	private static function get_relationship_ids( $post_type, $post_id, $field ) {
 		$pod = pods( $post_type, $post_id );
 		if ( ! $pod ) {
-			return 0;
+			return array();
 		}
 
 		$value = $pod->field( $field . '.ID' );
-		if ( is_array( $value ) ) {
-			if ( isset( $value['ID'] ) ) {
-				$value = $value['ID'];
-			} else {
-				$value = reset( $value );
-				if ( is_array( $value ) && isset( $value['ID'] ) ) {
-					$value = $value['ID'];
-				}
-			}
+		return self::extract_relationship_ids( $value );
+	}
+
+	/**
+	 * Extracts IDs from the scalar, object, or array shapes Pods may return.
+	 *
+	 * @param mixed $value Relationship value.
+	 * @return array
+	 */
+	private static function extract_relationship_ids( $value ) {
+		if ( is_numeric( $value ) ) {
+			return array( (int) $value );
 		}
 		if ( is_object( $value ) && isset( $value->ID ) ) {
-			$value = $value->ID;
+			return array( (int) $value->ID );
+		}
+		if ( ! is_array( $value ) ) {
+			return array();
+		}
+		if ( isset( $value['ID'] ) && is_numeric( $value['ID'] ) ) {
+			return array( (int) $value['ID'] );
 		}
 
-		return is_numeric( $value ) ? (int) $value : 0;
+		$ids = array();
+		foreach ( $value as $item ) {
+			$ids = array_merge( $ids, self::extract_relationship_ids( $item ) );
+		}
+		return self::normalize_relationship_ids( $ids );
+	}
+
+	/**
+	 * Normalizes scalar or multiple relationship values while retaining order.
+	 *
+	 * @param mixed $ids Relationship ID or IDs.
+	 * @return array
+	 */
+	private static function normalize_relationship_ids( $ids ) {
+		$ids = is_array( $ids ) ? $ids : array( $ids );
+		$ids = array_map( 'intval', $ids );
+		$ids = array_filter( $ids );
+		return array_values( array_unique( $ids ) );
 	}
 
 	/**
@@ -696,6 +883,9 @@ final class Horizon_Cruise_CSV_Importer {
 
 		if ( in_array( $type, array( 'paragraph', 'wysiwyg' ), true ) ) {
 			return self::normalize_editor_value( $stored ) === self::normalize_editor_value( $imported );
+		}
+		if ( 'number' === $type && is_numeric( $stored ) && is_numeric( $imported ) ) {
+			return (float) $stored === (float) $imported;
 		}
 
 		$charset = get_bloginfo( 'charset' ) ? get_bloginfo( 'charset' ) : 'UTF-8';

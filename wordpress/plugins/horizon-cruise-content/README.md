@@ -11,7 +11,7 @@ The plugin registers four structured content types:
 
 The content types are editable in WordPress and exposed through the standard REST API. They do not have WordPress-rendered public pages or archives. The separate Next.js application will eventually render their public pages.
 
-Version 0.3.1 provides an administrator-only, preview-first CSV importer for Cruise Lines and Ships under **Tools → Horizon Cruise Import**. It uses a permanent private `import_key` to update records safely and never matches records by title.
+Version 0.4.0 provides an administrator-only, preview-first CSV importer for Cruise Lines, Ships, Ship Features and Featured Journeys under **Tools → Horizon Cruise Import**. It uses a permanent private `import_key` to update records safely and never matches records by title.
 
 Only titles, featured images and revisions are enabled. There is no unrestricted main content editor. Pods fields, taxonomies, relationships, frontend templates and example records are intentionally outside this first stage.
 
@@ -50,16 +50,25 @@ No uninstall data-removal routine is included.
 
 ## CSV importer
 
-Pods must be active, and the Cruise Lines and Ships Pods must use the field names represented in the bundled templates.
+Pods must be active, and all four Pods must use the field names represented in the bundled templates.
 
 Supported files:
 
 - `csv-templates/cruise-lines-template.csv`
 - `csv-templates/ships-template.csv`
+- `csv-templates/ship-features-template.csv`
+- `csv-templates/featured-journeys-template.csv`
 
-The first version imports titles, text, formatted content and the Ship → Cruise Line relationship. It intentionally ignores media. New records are drafts; updates retain the existing publication status. Omitted columns and blank cells preserve their existing values.
+The importer handles titles, text, formatted content and configured relationships. It intentionally ignores media. New records are drafts; updates retain the existing publication status. Omitted columns and blank cells preserve their existing values.
 
-`import_key` is mandatory and is stored in private WordPress metadata. Keys must be permanent and unique within a content type. Ships use `cruise_line_import_key` to reference the related Cruise Line by its import key.
+`import_key` is mandatory and is stored in private WordPress metadata. Keys must be permanent and unique within a content type.
+
+Relationship columns:
+
+- Ships use `cruise_line_import_key`.
+- Ship Features use `ship_import_key`.
+- Featured Journeys use `cruise_line_import_key` and `ship_import_keys`.
+- Separate multiple values in `ship_import_keys` with a pipe (`|`), for example `ship-one|ship-two`.
 
 ### Fictional test dataset
 
@@ -71,6 +80,11 @@ The clearly labelled test files create one fictional Cruise Line and two fiction
 
 All newly imported test records will be drafts.
 
+After the Cruise Line and Ships exist, the additional fictional files can be imported in this order:
+
+1. Import `csv-test-data/fictional-ship-features.csv` as **Ship Features**.
+2. Import `csv-test-data/fictional-featured-journey.csv` as **Featured Journeys**.
+
 ### Required test sequence
 
 1. **First import:** import the fictional Cruise Line first, then the Ships. Confirm that one line and two ships are created as drafts.
@@ -78,14 +92,23 @@ All newly imported test records will be drafts.
 3. **Update:** change one non-blank field in a copied test CSV. Preview and import it, then confirm that only the matching `import_key` record is updated.
 4. **Blank preservation:** blank a field that already contains content, import the file, and confirm the stored value remains unchanged.
 5. **Invalid relationship:** change a ship's `cruise_line_import_key` to a nonexistent key. Confirm the preview rejects that row and that no orphan Ship is created.
+6. **Ship Feature relationships:** repeat the same checks with `ship_import_key`, and confirm invalid Section values are rejected.
+7. **Featured Journey relationships:** confirm the fictional Journey links to both test Ships using the pipe-delimited `ship_import_keys`; then test a missing or ambiguous key and confirm the whole row fails without changing it.
+8. **Journey validation:** confirm negative prices, non-three-letter currencies and dates outside `YYYY-MM-DD` are rejected.
 
 The importer never deletes records or clears fields. A validation preview expires after 30 minutes and is restricted to the administrator who uploaded it.
 
 ### Draft Cruise Line relationships
 
-The Ship field named `cruise_line` must allow both **Published** and **Draft** post statuses in its Pods relationship settings. Otherwise Pods can hide a correctly stored draft relationship from the editor and may reject it during a save.
+All relationship fields must allow both **Published** and **Draft** post statuses in their Pods relationship settings. Otherwise Pods can hide a correctly stored draft relationship from the editor and may reject it during a save.
 
 In WordPress, open **Pods Admin → Edit Pods → Ships → Cruise line**. Under the relationship field options, set **Limit list by Post Status** to include both **Published** and **Draft**, then save the field and Pod. Do not publish test records to work around this setting.
+
+Apply the same setting to:
+
+- **Pods Admin → Edit Pods → Ship Features → Ship**
+- **Pods Admin → Edit Pods → Featured Journeys → Cruise line**
+- **Pods Admin → Edit Pods → Featured Journeys → Ships**
 
 ## Next stage
 

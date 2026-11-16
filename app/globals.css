@@ -149,6 +149,8 @@ a { color: inherit; }
 .cruise-search-hero .eyebrow { color: #e5c98d; }
 .cruise-search-hero h1 { margin: 0; font: 500 clamp(3.1rem, 7vw, 6rem)/.95 Georgia, serif; letter-spacing: -.045em; }
 .cruise-search-hero p:last-child { max-width: 650px; margin: 1.25rem 0 0; color: #edf3f2; font: 1.05rem/1.65 Georgia, serif; }
+.search-widget-shell { overflow: hidden; border: 1px solid var(--line); background: #fff; }
+.search-widget-shell .widgety-frame { display: block; min-height: 900px; }
 .search-layout { display: grid; grid-template-columns: minmax(270px, .78fr) minmax(0, 2.22fr); gap: 1.5rem; align-items: start; }
 .search-filters { border: 1px solid var(--line); background: var(--paper-alt); }
 .filter-intro { padding: 1.5rem; border-bottom: 1px solid var(--line); }

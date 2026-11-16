@@ -1,7 +1,7 @@
 {
     "@meta": {
         "version": "3.3.9.2",
-        "build": 1794867614
+        "build": 1794867999
     },
     "settings": {
         "types_only": "0",
@@ -729,6 +729,34 @@
                             "type": "paragraph",
                             "paragraph_allowed_html_tags": "strong em a ul ol li b i",
                             "paragraph_max_length": "-1",
+                            "repeatable": "0",
+                            "repeatable_format": "default",
+                            "default_evaluate_tags": "0",
+                            "default_empty_fields": "0",
+                            "roles_allowed": "administrator",
+                            "revisions_revision_field": "1",
+                            "enable_conditional_logic": "0",
+                            "conditional_logic_save_value": "0",
+                            "rest_pick_response": "array",
+                            "rest_pick_depth": "1",
+                            "required": "0",
+                            "logged_in_only": "0",
+                            "admin_only": "0",
+                            "restrict_role": "0",
+                            "restrict_capability": "0",
+                            "hidden": "0",
+                            "read_only": "0",
+                            "read_only_restricted": "0",
+                            "rest_read": "1"
+                        },
+                        {
+                            "name": "itinerary",
+                            "id": 88,
+                            "label": "Itinerary",
+                            "description": "",
+                            "weight": 16,
+                            "type": "wysiwyg",
+                            "wysiwyg_editor": "tinymce",
                             "repeatable": "0",
                             "repeatable_format": "default",
                             "default_evaluate_tags": "0",

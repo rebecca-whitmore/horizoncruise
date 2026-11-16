@@ -367,21 +367,21 @@ final class Horizon_Cruise_CSV_Importer {
 	 * @return string
 	 */
 	private static function proposed_action( $post_type, $post_id, $row, $relationship_id ) {
-		if ( isset( $row['title'] ) && '' !== trim( (string) $row['title'] ) && get_the_title( $post_id ) !== self::sanitize_title_value( $row['title'] ) ) {
+		if ( isset( $row['title'] ) && '' !== trim( (string) $row['title'] ) && ! self::values_are_equivalent( get_post_field( 'post_title', $post_id, 'raw' ), self::sanitize_title_value( $row['title'] ), 'text' ) ) {
 			return 'update';
 		}
 
 		foreach ( self::definitions()[ $post_type ]['fields'] as $field => $field_type ) {
 			if ( isset( $row[ $field ] ) && '' !== trim( (string) $row[ $field ] ) ) {
 				$new_value = self::sanitize_field_value( $row[ $field ], $field_type );
-				$old_value = (string) get_post_meta( $post_id, $field, true );
-				if ( $old_value !== $new_value ) {
+				$old_value = self::get_pod_field_value( $post_type, $post_id, $field );
+				if ( ! self::values_are_equivalent( $old_value, $new_value, $field_type ) ) {
 					return 'update';
 				}
 			}
 		}
 
-		if ( 'ship' === $post_type && $relationship_id && (int) get_post_meta( $post_id, 'cruise_line', true ) !== $relationship_id ) {
+		if ( 'ship' === $post_type && $relationship_id && self::get_relationship_id( $post_type, $post_id, 'cruise_line' ) !== $relationship_id ) {
 			return 'update';
 		}
 
@@ -417,16 +417,29 @@ final class Horizon_Cruise_CSV_Importer {
 			$pod_data  = array();
 			foreach ( self::definitions()[ $post_type ]['fields'] as $field => $field_type ) {
 				if ( isset( $row[ $field ] ) && '' !== trim( (string) $row[ $field ] ) ) {
-					$pod_data[ $field ] = self::sanitize_field_value( $row[ $field ], $field_type );
+					$new_value = self::sanitize_field_value( $row[ $field ], $field_type );
+					if ( $is_create || ! self::values_are_equivalent( self::get_pod_field_value( $post_type, $post_id, $field ), $new_value, $field_type ) ) {
+						$pod_data[ $field ] = $new_value;
+					}
 				}
 			}
-			if ( 'ship' === $post_type && $check['relationship_id'] ) {
+			$relationship_changed = 'ship' === $post_type && $check['relationship_id'] && ( $is_create || self::get_relationship_id( $post_type, $post_id, 'cruise_line' ) !== (int) $check['relationship_id'] );
+			if ( $relationship_changed ) {
 				$pod_data['cruise_line'] = $check['relationship_id'];
+			}
+			$title_changed = isset( $row['title'] ) && '' !== trim( (string) $row['title'] ) && ( $is_create || ! self::values_are_equivalent( get_post_field( 'post_title', $post_id, 'raw' ), self::sanitize_title_value( $row['title'] ), 'text' ) );
+
+			if ( ! $is_create && ! $pod_data && ! $title_changed ) {
+				++$report['unchanged'];
+				$report['rows'][] = array_merge( $check, array( 'action' => 'unchanged', 'message' => __( 'No submitted value differs from WordPress.', 'horizon-cruise-content' ) ) );
+				continue;
 			}
 
 			if ( $is_create ) {
 				$pod_data['post_title']  = self::sanitize_title_value( $row['title'] );
 				$pod_data['post_status'] = 'draft';
+				$pod_data['comment_status'] = 'closed';
+				$pod_data['ping_status']    = 'closed';
 				$pod                     = pods( $post_type );
 				$post_id                 = $pod ? $pod->add( $pod_data ) : false;
 				if ( ! $post_id ) {
@@ -445,7 +458,7 @@ final class Horizon_Cruise_CSV_Importer {
 						continue;
 					}
 				}
-				if ( isset( $row['title'] ) && '' !== trim( (string) $row['title'] ) ) {
+				if ( $title_changed ) {
 					$title_result = wp_update_post(
 						array( 'ID' => $post_id, 'post_title' => self::sanitize_title_value( $row['title'] ) ),
 						true
@@ -455,6 +468,16 @@ final class Horizon_Cruise_CSV_Importer {
 						$report['rows'][] = array_merge( $check, array( 'action' => 'failed', 'message' => $title_result->get_error_message() ) );
 						continue;
 					}
+				}
+			}
+
+			if ( $relationship_changed && self::get_relationship_id( $post_type, $post_id, 'cruise_line' ) !== (int) $check['relationship_id'] ) {
+				$relationship_pod   = pods( $post_type, $post_id );
+				$relationship_saved = $relationship_pod ? $relationship_pod->save( 'cruise_line', (int) $check['relationship_id'] ) : false;
+				if ( false === $relationship_saved || self::get_relationship_id( $post_type, $post_id, 'cruise_line' ) !== (int) $check['relationship_id'] ) {
+					++$report['failed'];
+					$report['rows'][] = array_merge( $check, array( 'action' => 'failed', 'message' => __( 'Pods did not retain the Cruise Line relationship. Check that the relationship field allows draft Cruise Lines.', 'horizon-cruise-content' ) ) );
+					continue;
 				}
 			}
 
@@ -486,7 +509,7 @@ final class Horizon_Cruise_CSV_Importer {
 		return get_posts(
 			array(
 				'post_type'      => $post_type,
-				'post_status'    => array_values( get_post_stati() ),
+				'post_status'    => array( 'draft', 'publish' ),
 				'posts_per_page' => 2,
 				'fields'         => 'ids',
 				'no_found_rows'  => true,
@@ -611,6 +634,92 @@ final class Horizon_Cruise_CSV_Importer {
 			return wp_kses_post( $value );
 		}
 		return sanitize_text_field( $value );
+	}
+
+	/**
+	 * Reads a structured value through Pods instead of assuming raw meta shape.
+	 *
+	 * @param string $post_type Post type.
+	 * @param int    $post_id   Post ID.
+	 * @param string $field     Pods field name.
+	 * @return mixed
+	 */
+	private static function get_pod_field_value( $post_type, $post_id, $field ) {
+		$pod = pods( $post_type, $post_id );
+		return $pod ? $pod->field( $field ) : '';
+	}
+
+	/**
+	 * Reads a single Pods relationship defensively as an integer ID.
+	 *
+	 * @param string $post_type Post type.
+	 * @param int    $post_id   Post ID.
+	 * @param string $field     Relationship field name.
+	 * @return int
+	 */
+	private static function get_relationship_id( $post_type, $post_id, $field ) {
+		$pod = pods( $post_type, $post_id );
+		if ( ! $pod ) {
+			return 0;
+		}
+
+		$value = $pod->field( $field . '.ID' );
+		if ( is_array( $value ) ) {
+			if ( isset( $value['ID'] ) ) {
+				$value = $value['ID'];
+			} else {
+				$value = reset( $value );
+				if ( is_array( $value ) && isset( $value['ID'] ) ) {
+					$value = $value['ID'];
+				}
+			}
+		}
+		if ( is_object( $value ) && isset( $value->ID ) ) {
+			$value = $value->ID;
+		}
+
+		return is_numeric( $value ) ? (int) $value : 0;
+	}
+
+	/**
+	 * Compares imported and stored values after normalizing editor formatting.
+	 *
+	 * @param mixed  $stored   Value read from WordPress/Pods.
+	 * @param mixed  $imported Sanitized CSV value.
+	 * @param string $type     Field type.
+	 * @return bool
+	 */
+	private static function values_are_equivalent( $stored, $imported, $type ) {
+		if ( is_array( $stored ) || is_object( $stored ) ) {
+			return false;
+		}
+
+		if ( in_array( $type, array( 'paragraph', 'wysiwyg' ), true ) ) {
+			return self::normalize_editor_value( $stored ) === self::normalize_editor_value( $imported );
+		}
+
+		$charset = get_bloginfo( 'charset' ) ? get_bloginfo( 'charset' ) : 'UTF-8';
+		$stored  = html_entity_decode( wp_unslash( (string) $stored ), ENT_QUOTES | ENT_HTML5, $charset );
+		$imported = html_entity_decode( wp_unslash( (string) $imported ), ENT_QUOTES | ENT_HTML5, $charset );
+		return trim( $stored ) === trim( $imported );
+	}
+
+	/**
+	 * Canonicalizes safe formatted content for an equivalence comparison only.
+	 *
+	 * The stored content itself is never rewritten by this method.
+	 *
+	 * @param mixed $value Editor value.
+	 * @return string
+	 */
+	private static function normalize_editor_value( $value ) {
+		$charset = get_bloginfo( 'charset' ) ? get_bloginfo( 'charset' ) : 'UTF-8';
+		$value   = wp_kses_post( wp_unslash( (string) $value ) );
+		$value   = html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, $charset );
+		$value   = wpautop( str_replace( array( "\r\n", "\r" ), "\n", $value ) );
+		$value   = preg_replace( '/>\s+</u', '><', $value );
+		$value   = preg_replace( '/\s+/u', ' ', $value );
+		return trim( (string) $value );
 	}
 
 	/**

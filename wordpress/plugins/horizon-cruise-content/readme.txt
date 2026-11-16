@@ -4,7 +4,7 @@ Tags: headless, custom post types, cruise
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.3.0
+Stable tag: 0.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,6 +56,12 @@ The importer matches only on a permanent private import key. New records are dra
 Templates and a clearly labelled fictional test dataset are bundled with the plugin.
 
 == Changelog ==
+
+= 0.3.1 =
+
+* Improved draft Cruise Line relationship saving and verification for Ship imports.
+* Prevented equivalent formatted values from causing unnecessary updates.
+* Removed discussion controls and closed comments and pingbacks for Horizon Cruise content types.
 
 = 0.3.0 =
 

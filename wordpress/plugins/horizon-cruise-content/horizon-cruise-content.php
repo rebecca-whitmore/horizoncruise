@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Horizon Cruise Content
  * Description:       Registers structured cruise lines, ships, and featured journeys for the Horizon Cruise headless WordPress CMS.
- * Version:           0.3.0
+ * Version:           0.3.1
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Horizon Cruise
@@ -205,6 +205,67 @@ function horizon_cruise_content_register_post_types() {
 	);
 }
 add_action( 'init', 'horizon_cruise_content_register_post_types' );
+
+/**
+ * Returns whether a post type belongs to Horizon Cruise structured content.
+ *
+ * @param string $post_type WordPress post type.
+ * @return bool
+ */
+function horizon_cruise_content_is_content_type( $post_type ) {
+	return in_array( $post_type, array( 'cruise_line', 'ship', 'featured_journey', 'ship_feature' ), true );
+}
+
+/**
+ * Removes discussion controls from every Horizon Cruise editing screen.
+ *
+ * @return void
+ */
+function horizon_cruise_content_remove_discussion_controls() {
+	foreach ( array( 'cruise_line', 'ship', 'featured_journey', 'ship_feature' ) as $post_type ) {
+		remove_post_type_support( $post_type, 'comments' );
+		remove_post_type_support( $post_type, 'trackbacks' );
+		remove_meta_box( 'commentstatusdiv', $post_type, 'normal' );
+		remove_meta_box( 'commentsdiv', $post_type, 'normal' );
+	}
+}
+add_action( 'admin_menu', 'horizon_cruise_content_remove_discussion_controls', 100 );
+add_action( 'add_meta_boxes', 'horizon_cruise_content_remove_discussion_controls', 100 );
+
+/**
+ * Forces comments and pingbacks closed whenever an HC record is saved.
+ *
+ * Ordinary WordPress Posts and other post types are deliberately untouched.
+ *
+ * @param array $data    Sanitized post data.
+ * @param array $postarr Raw post data.
+ * @return array
+ */
+function horizon_cruise_content_close_discussion_on_save( $data, $postarr ) {
+	if ( isset( $data['post_type'] ) && horizon_cruise_content_is_content_type( $data['post_type'] ) ) {
+		$data['comment_status'] = 'closed';
+		$data['ping_status']    = 'closed';
+	}
+
+	return $data;
+}
+add_filter( 'wp_insert_post_data', 'horizon_cruise_content_close_discussion_on_save', 10, 2 );
+
+/**
+ * Ensures existing HC records never accept comments or pingbacks publicly.
+ *
+ * This enforces closure at runtime without bulk-modifying stored records.
+ *
+ * @param bool $open    Whether comments or pings are open.
+ * @param int  $post_id Post ID.
+ * @return bool
+ */
+function horizon_cruise_content_force_discussion_closed( $open, $post_id ) {
+	$post_type = get_post_type( $post_id );
+	return horizon_cruise_content_is_content_type( $post_type ) ? false : $open;
+}
+add_filter( 'comments_open', 'horizon_cruise_content_force_discussion_closed', 10, 2 );
+add_filter( 'pings_open', 'horizon_cruise_content_force_discussion_closed', 10, 2 );
 
 /**
  * Registers the post types before refreshing WordPress's routing rules.

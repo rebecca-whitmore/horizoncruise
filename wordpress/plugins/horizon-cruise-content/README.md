@@ -11,7 +11,7 @@ The plugin registers four structured content types:
 
 The content types are editable in WordPress and exposed through the standard REST API. They do not have WordPress-rendered public pages or archives. The separate Next.js application will eventually render their public pages.
 
-Version 0.3.0 also provides an administrator-only, preview-first CSV importer for Cruise Lines and Ships under **Tools → Horizon Cruise Import**. It uses a permanent private `import_key` to update records safely and never matches records by title.
+Version 0.3.1 provides an administrator-only, preview-first CSV importer for Cruise Lines and Ships under **Tools → Horizon Cruise Import**. It uses a permanent private `import_key` to update records safely and never matches records by title.
 
 Only titles, featured images and revisions are enabled. There is no unrestricted main content editor. Pods fields, taxonomies, relationships, frontend templates and example records are intentionally outside this first stage.
 
@@ -80,6 +80,12 @@ All newly imported test records will be drafts.
 5. **Invalid relationship:** change a ship's `cruise_line_import_key` to a nonexistent key. Confirm the preview rejects that row and that no orphan Ship is created.
 
 The importer never deletes records or clears fields. A validation preview expires after 30 minutes and is restricted to the administrator who uploaded it.
+
+### Draft Cruise Line relationships
+
+The Ship field named `cruise_line` must allow both **Published** and **Draft** post statuses in its Pods relationship settings. Otherwise Pods can hide a correctly stored draft relationship from the editor and may reject it during a save.
+
+In WordPress, open **Pods Admin → Edit Pods → Ships → Cruise line**. Under the relationship field options, set **Limit list by Post Status** to include both **Published** and **Draft**, then save the field and Pod. Do not publish test records to work around this setting.
 
 ## Next stage
 

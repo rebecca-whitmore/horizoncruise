@@ -11,6 +11,8 @@ The plugin registers four structured content types:
 
 The content types are editable in WordPress and exposed through the standard REST API. They do not have WordPress-rendered public pages or archives. The separate Next.js application will eventually render their public pages.
 
+Version 0.3.0 also provides an administrator-only, preview-first CSV importer for Cruise Lines and Ships under **Tools → Horizon Cruise Import**. It uses a permanent private `import_key` to update records safely and never matches records by title.
+
 Only titles, featured images and revisions are enabled. There is no unrestricted main content editor. Pods fields, taxonomies, relationships, frontend templates and example records are intentionally outside this first stage.
 
 ## Install the packaged ZIP
@@ -46,6 +48,39 @@ Deactivation unregisters the content types and refreshes routing rules. It does 
 
 No uninstall data-removal routine is included.
 
+## CSV importer
+
+Pods must be active, and the Cruise Lines and Ships Pods must use the field names represented in the bundled templates.
+
+Supported files:
+
+- `csv-templates/cruise-lines-template.csv`
+- `csv-templates/ships-template.csv`
+
+The first version imports titles, text, formatted content and the Ship → Cruise Line relationship. It intentionally ignores media. New records are drafts; updates retain the existing publication status. Omitted columns and blank cells preserve their existing values.
+
+`import_key` is mandatory and is stored in private WordPress metadata. Keys must be permanent and unique within a content type. Ships use `cruise_line_import_key` to reference the related Cruise Line by its import key.
+
+### Fictional test dataset
+
+The clearly labelled test files create one fictional Cruise Line and two fictional Ships:
+
+1. Import `csv-test-data/fictional-cruise-line.csv` as **Cruise Lines**.
+2. Import `csv-test-data/fictional-ships.csv` as **Ships**.
+3. Review each validation preview before selecting **Confirm import**.
+
+All newly imported test records will be drafts.
+
+### Required test sequence
+
+1. **First import:** import the fictional Cruise Line first, then the Ships. Confirm that one line and two ships are created as drafts.
+2. **Repeat import:** import both files again. Confirm that all rows are reported unchanged and no duplicates are created.
+3. **Update:** change one non-blank field in a copied test CSV. Preview and import it, then confirm that only the matching `import_key` record is updated.
+4. **Blank preservation:** blank a field that already contains content, import the file, and confirm the stored value remains unchanged.
+5. **Invalid relationship:** change a ship's `cruise_line_import_key` to a nonexistent key. Confirm the preview rejects that row and that no orphan Ship is created.
+
+The importer never deletes records or clears fields. A validation preview expires after 30 minutes and is restricted to the administrator who uploaded it.
+
 ## Next stage
 
-Pods will provide the structured fields after the field model has been agreed. This plugin must remain the owner of the post-type registration; Pods should extend the existing content types rather than recreating them.
+Pods provides the structured fields while this plugin remains the owner of post-type registration. Pods should extend the existing content types rather than recreating them.

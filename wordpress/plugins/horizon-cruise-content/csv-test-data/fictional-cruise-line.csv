@@ -1,0 +1,2 @@
+import_key,title,short_introduction,full_overview
+test-line-aurora,Horizon Test Line (Fictional),A fictional cruise line created only to test the Horizon Cruise importer.,"<p>Horizon Test Line is <strong>fictional</strong> and must remain a draft. It exists solely for importer testing.</p><p>This second paragraph checks that formatted content and paragraph structure are preserved.</p>"

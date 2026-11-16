@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Horizon Cruise Content
  * Description:       Registers structured cruise lines, ships, and featured journeys for the Horizon Cruise headless WordPress CMS.
- * Version:           0.2.0
+ * Version:           0.3.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Horizon Cruise
@@ -14,6 +14,8 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-horizon-cruise-csv-importer.php';
 
 /**
  * Registers Horizon Cruise's structured content types.

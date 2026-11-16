@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Horizon Cruise Content
  * Description:       Registers structured cruise lines, ships, and featured journeys for the Horizon Cruise headless WordPress CMS.
- * Version:           0.1.0
+ * Version:           0.2.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Horizon Cruise
@@ -161,6 +161,46 @@ function horizon_cruise_content_register_post_types() {
 			)
 		)
 	);
+
+	register_post_type(
+		'ship_feature',
+		array_merge(
+			$shared_args,
+			array(
+				'labels'        => array(
+					'name'                     => __( 'Ship Features', 'horizon-cruise-content' ),
+					'singular_name'            => __( 'Ship Feature', 'horizon-cruise-content' ),
+					'add_new'                  => __( 'Add New', 'horizon-cruise-content' ),
+					'add_new_item'             => __( 'Add New Ship Feature', 'horizon-cruise-content' ),
+					'edit_item'                => __( 'Edit Ship Feature', 'horizon-cruise-content' ),
+					'new_item'                 => __( 'New Ship Feature', 'horizon-cruise-content' ),
+					'view_item'                => __( 'View Ship Feature Data', 'horizon-cruise-content' ),
+					'view_items'               => __( 'View Ship Feature Data', 'horizon-cruise-content' ),
+					'search_items'             => __( 'Search Ship Features', 'horizon-cruise-content' ),
+					'not_found'                => __( 'No ship features found.', 'horizon-cruise-content' ),
+					'not_found_in_trash'       => __( 'No ship features found in Trash.', 'horizon-cruise-content' ),
+					'all_items'                => __( 'All Ship Features', 'horizon-cruise-content' ),
+					'archives'                 => __( 'Ship Feature Archives', 'horizon-cruise-content' ),
+					'attributes'               => __( 'Ship Feature Attributes', 'horizon-cruise-content' ),
+					'insert_into_item'         => __( 'Insert into ship feature', 'horizon-cruise-content' ),
+					'uploaded_to_this_item'    => __( 'Uploaded to this ship feature', 'horizon-cruise-content' ),
+					'featured_image'           => __( 'Ship Feature Image', 'horizon-cruise-content' ),
+					'set_featured_image'       => __( 'Set ship feature image', 'horizon-cruise-content' ),
+					'remove_featured_image'    => __( 'Remove ship feature image', 'horizon-cruise-content' ),
+					'use_featured_image'       => __( 'Use as ship feature image', 'horizon-cruise-content' ),
+					'item_published'           => __( 'Ship feature published.', 'horizon-cruise-content' ),
+					'item_published_privately' => __( 'Ship feature published privately.', 'horizon-cruise-content' ),
+					'item_reverted_to_draft'   => __( 'Ship feature reverted to draft.', 'horizon-cruise-content' ),
+					'item_scheduled'           => __( 'Ship feature scheduled.', 'horizon-cruise-content' ),
+					'item_updated'             => __( 'Ship feature updated.', 'horizon-cruise-content' ),
+					'menu_name'                => __( 'Ship Features', 'horizon-cruise-content' ),
+				),
+				'menu_icon'     => 'dashicons-star-filled',
+				'menu_position' => 23,
+				'rest_base'     => 'ship-features',
+			)
+		)
+	);
 }
 add_action( 'init', 'horizon_cruise_content_register_post_types' );
 
@@ -185,4 +225,3 @@ function horizon_cruise_content_deactivate() {
 	flush_rewrite_rules();
 }
 register_deactivation_hook( __FILE__, 'horizon_cruise_content_deactivate' );
-

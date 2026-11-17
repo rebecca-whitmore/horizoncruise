@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Horizon Cruise Content
  * Description:       Registers structured cruise lines, ships, and featured journeys for the Horizon Cruise headless WordPress CMS.
- * Version:           0.4.1
+ * Version:           0.4.2
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Horizon Cruise
@@ -258,11 +258,39 @@ function horizon_cruise_content_ship_collection_params( $params ) {
 add_filter( 'rest_ship_collection_params', 'horizon_cruise_content_ship_collection_params' );
 
 /**
- * Finds Ship IDs through Pods' relationship traversal.
+ * Extracts integer IDs from the scalar, object or array shapes Pods may return.
  *
- * Pods 3.3.9.2 stores pick relationships through its relationship layer even
- * when the Pod itself uses meta storage. Querying `cruise_line.ID` delegates
- * that storage detail to Pods and compares the related integer ID exactly.
+ * @param mixed $value Pods relationship value.
+ * @return int[]
+ */
+function horizon_cruise_content_extract_relationship_ids( $value ) {
+	if ( is_numeric( $value ) ) {
+		return array( (int) $value );
+	}
+	if ( is_object( $value ) && isset( $value->ID ) ) {
+		return array( (int) $value->ID );
+	}
+	if ( ! is_array( $value ) ) {
+		return array();
+	}
+	if ( isset( $value['ID'] ) && is_numeric( $value['ID'] ) ) {
+		return array( (int) $value['ID'] );
+	}
+
+	$ids = array();
+	foreach ( $value as $item ) {
+		$ids = array_merge( $ids, horizon_cruise_content_extract_relationship_ids( $item ) );
+	}
+
+	return array_values( array_unique( array_filter( array_map( 'absint', $ids ) ) ) );
+}
+
+/**
+ * Finds Ship IDs by reading the relationship through Pods' field API.
+ *
+ * The live site proved that the relationship is readable while a Pods::find()
+ * traversal returned no rows. Reading `cruise_line.ID` for each Ship delegates
+ * the physical storage detail to Pods and keeps the comparison exact.
  *
  * @param int $cruise_line_id Cruise Line post ID.
  * @return int[]
@@ -273,25 +301,32 @@ function horizon_cruise_content_get_ship_ids_for_cruise_line( $cruise_line_id ) 
 		return array();
 	}
 
-	$ships = pods( 'ship' );
-	if ( ! $ships ) {
-		return array();
-	}
-
-	$ships->find(
+	$candidate_ids = get_posts(
 		array(
-			'limit'      => -1,
-			'pagination' => false,
-			'select'     => 't.ID',
-			'where'      => 'cruise_line.ID = ' . $cruise_line_id,
+			'post_type'              => 'ship',
+			'post_status'            => array_values( get_post_stati() ),
+			'posts_per_page'         => -1,
+			'fields'                 => 'ids',
+			'no_found_rows'          => true,
+			'orderby'                => 'ID',
+			'order'                  => 'ASC',
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
 		)
 	);
 
 	$ship_ids = array();
-	while ( $ships->fetch() ) {
-		$ship_id = absint( $ships->id() );
-		if ( $ship_id ) {
-			$ship_ids[] = $ship_id;
+	foreach ( $candidate_ids as $candidate_id ) {
+		$ship = pods( 'ship', $candidate_id );
+		if ( ! $ship ) {
+			continue;
+		}
+
+		$related_ids = horizon_cruise_content_extract_relationship_ids(
+			$ship->field( 'cruise_line.ID' )
+		);
+		if ( in_array( $cruise_line_id, $related_ids, true ) ) {
+			$ship_ids[] = absint( $candidate_id );
 		}
 	}
 

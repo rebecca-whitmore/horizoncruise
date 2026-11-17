@@ -4,7 +4,7 @@ Tags: headless, custom post types, cruise
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.4.1
+Stable tag: 0.4.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,6 +58,10 @@ Templates and a clearly labelled fictional test dataset are bundled with the plu
 Featured Journey ship keys use a pipe delimiter, for example `ship-one|ship-two`.
 
 == Changelog ==
+
+= 0.4.2 =
+
+* Fixed Cruise Line filtering to read existing relationships through the Pods field API without assuming their physical storage.
 
 = 0.4.1 =
 

@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Horizon Cruise Content
  * Description:       Registers structured cruise lines, ships, and featured journeys for the Horizon Cruise headless WordPress CMS.
- * Version:           0.4.0
+ * Version:           0.4.1
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Horizon Cruise
@@ -205,6 +205,128 @@ function horizon_cruise_content_register_post_types() {
 	);
 }
 add_action( 'init', 'horizon_cruise_content_register_post_types' );
+
+/**
+ * Validates REST relationship IDs as positive integers.
+ *
+ * @param mixed           $value   Submitted parameter value.
+ * @param WP_REST_Request $request Current REST request.
+ * @param string          $param   Parameter name.
+ * @return true|WP_Error
+ */
+function horizon_cruise_content_validate_positive_integer( $value, $request, $param ) {
+	$valid = false !== filter_var(
+		$value,
+		FILTER_VALIDATE_INT,
+		array( 'options' => array( 'min_range' => 1 ) )
+	);
+
+	if ( $valid ) {
+		return true;
+	}
+
+	return new WP_Error(
+		'rest_invalid_param',
+		sprintf(
+			/* translators: %s: REST parameter name. */
+			__( '%s must be a positive integer.', 'horizon-cruise-content' ),
+			$param
+		),
+		array( 'status' => 400 )
+	);
+}
+
+/**
+ * Registers the Cruise Line relationship filter on the Ships collection.
+ *
+ * The hook name uses the internal `ship` post type, not its `ships` REST base.
+ *
+ * @param array $params Registered collection parameters.
+ * @return array
+ */
+function horizon_cruise_content_ship_collection_params( $params ) {
+	$params['cruise_line'] = array(
+		'description'       => __( 'Limit ships to the exact related Cruise Line post ID.', 'horizon-cruise-content' ),
+		'type'              => 'integer',
+		'minimum'           => 1,
+		'sanitize_callback' => 'absint',
+		'validate_callback' => 'horizon_cruise_content_validate_positive_integer',
+	);
+
+	return $params;
+}
+add_filter( 'rest_ship_collection_params', 'horizon_cruise_content_ship_collection_params' );
+
+/**
+ * Finds Ship IDs through Pods' relationship traversal.
+ *
+ * Pods 3.3.9.2 stores pick relationships through its relationship layer even
+ * when the Pod itself uses meta storage. Querying `cruise_line.ID` delegates
+ * that storage detail to Pods and compares the related integer ID exactly.
+ *
+ * @param int $cruise_line_id Cruise Line post ID.
+ * @return int[]
+ */
+function horizon_cruise_content_get_ship_ids_for_cruise_line( $cruise_line_id ) {
+	$cruise_line_id = absint( $cruise_line_id );
+	if ( ! $cruise_line_id || ! function_exists( 'pods' ) ) {
+		return array();
+	}
+
+	$ships = pods( 'ship' );
+	if ( ! $ships ) {
+		return array();
+	}
+
+	$ships->find(
+		array(
+			'limit'      => -1,
+			'pagination' => false,
+			'select'     => 't.ID',
+			'where'      => 'cruise_line.ID = ' . $cruise_line_id,
+		)
+	);
+
+	$ship_ids = array();
+	while ( $ships->fetch() ) {
+		$ship_id = absint( $ships->id() );
+		if ( $ship_id ) {
+			$ship_ids[] = $ship_id;
+		}
+	}
+
+	return array_values( array_unique( $ship_ids ) );
+}
+
+/**
+ * Applies the exact Cruise Line relationship to the standard Ships query.
+ *
+ * WordPress remains responsible for post status, permissions, ordering and
+ * pagination. `[0]` is deliberate: an empty `post__in` means "no restriction"
+ * to WP_Query and could otherwise expose every published Ship.
+ *
+ * @param array           $args    WP_Query arguments prepared by REST.
+ * @param WP_REST_Request $request Current REST request.
+ * @return array
+ */
+function horizon_cruise_content_filter_ships_by_cruise_line( $args, $request ) {
+	if ( ! $request->has_param( 'cruise_line' ) ) {
+		return $args;
+	}
+
+	$ship_ids = horizon_cruise_content_get_ship_ids_for_cruise_line(
+		$request->get_param( 'cruise_line' )
+	);
+
+	if ( isset( $args['post__in'] ) && is_array( $args['post__in'] ) ) {
+		$ship_ids = array_values( array_intersect( array_map( 'absint', $args['post__in'] ), $ship_ids ) );
+	}
+
+	$args['post__in'] = $ship_ids ? $ship_ids : array( 0 );
+
+	return $args;
+}
+add_filter( 'rest_ship_query', 'horizon_cruise_content_filter_ships_by_cruise_line', 10, 2 );
 
 /**
  * Returns whether a post type belongs to Horizon Cruise structured content.

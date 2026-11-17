@@ -1,3 +1,4 @@
+import "server-only";
 import type { Metadata } from "next";
 
 export const REVALIDATE_SECONDS = 60;
@@ -53,6 +54,15 @@ export type WordPressPost = {
 
 export type SitemapPost = { slug: string; modified: string };
 
+export type WordPressShip = {
+  id: number;
+  slug: string;
+  modified: string;
+  title: RenderedText;
+  cruise_line?: number;
+  _embedded?: WordPressPost["_embedded"];
+};
+
 export type FetchResult<T> =
   | { status: "success"; data: T }
   | { status: "error"; message: string };
@@ -78,6 +88,84 @@ async function request<T>(url: string): Promise<T> {
   }
 
   return response.json() as Promise<T>;
+}
+
+async function requestCollectionPage<T>(
+  url: string,
+): Promise<{ data: T; totalPages: number }> {
+  const response = await fetch(url, {
+    next: { revalidate: REVALIDATE_SECONDS },
+    headers: { Accept: "application/json" },
+  });
+
+  if (!response.ok) {
+    throw new Error(`WordPress returned ${response.status}.`);
+  }
+
+  const totalPagesHeader = response.headers.get("X-WP-TotalPages");
+  const totalPages = Number(totalPagesHeader);
+  if (
+    totalPagesHeader === null ||
+    !Number.isInteger(totalPages) ||
+    totalPages < 0
+  ) {
+    throw new Error("WordPress returned invalid pagination headers.");
+  }
+
+  return {
+    data: (await response.json()) as T,
+    totalPages,
+  };
+}
+
+/**
+ * Retrieves every public Ship related to one Cruise Line.
+ *
+ * The unauthenticated WordPress collection deliberately controls publication
+ * visibility. A successful empty array is therefore different from an API
+ * failure, which returns the `error` FetchResult branch.
+ */
+export async function getShipsByCruiseLine(
+  cruiseLineId: number,
+): Promise<FetchResult<WordPressShip[]>> {
+  if (!Number.isInteger(cruiseLineId) || cruiseLineId <= 0) {
+    return { status: "error", message: "A valid cruise line ID is required." };
+  }
+
+  const pageUrl = (page: number) => {
+    const search = new URLSearchParams({
+      cruise_line: String(cruiseLineId),
+      page: String(page),
+      per_page: "100",
+      _embed: "wp:featuredmedia",
+    });
+    return apiUrl("ships", `?${search.toString()}`);
+  };
+
+  try {
+    const firstPage = await requestCollectionPage<WordPressShip[]>(pageUrl(1));
+    const remainingPages = await Promise.all(
+      Array.from(
+        { length: Math.max(0, firstPage.totalPages - 1) },
+        (_, index) =>
+          requestCollectionPage<WordPressShip[]>(pageUrl(index + 2)),
+      ),
+    );
+
+    return {
+      status: "success",
+      data: [
+        ...firstPage.data,
+        ...remainingPages.flatMap((page) => page.data),
+      ],
+    };
+  } catch (error) {
+    console.error(
+      `Could not load ships for cruise line ${cruiseLineId}:`,
+      error,
+    );
+    return { status: "error", message: "This fleet is temporarily unavailable." };
+  }
 }
 
 export async function getPosts(): Promise<FetchResult<WordPressPost[]>> {

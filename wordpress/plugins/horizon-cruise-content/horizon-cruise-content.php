@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Horizon Cruise Content
  * Description:       Registers structured cruise lines, ships, and featured journeys for the Horizon Cruise headless WordPress CMS.
- * Version:           0.4.2
+ * Version:           0.4.3
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Horizon Cruise
@@ -362,6 +362,120 @@ function horizon_cruise_content_filter_ships_by_cruise_line( $args, $request ) {
 	return $args;
 }
 add_filter( 'rest_ship_query', 'horizon_cruise_content_filter_ships_by_cruise_line', 10, 2 );
+
+/**
+ * Registers a temporary, administrator-only relationship diagnostic page.
+ *
+ * @return void
+ */
+function horizon_cruise_content_register_relationship_diagnostic() {
+	add_management_page(
+		__( 'HC Relationship Diagnostic', 'horizon-cruise-content' ),
+		__( 'HC Relationship Diagnostic', 'horizon-cruise-content' ),
+		'manage_options',
+		'horizon-cruise-relationship-diagnostic',
+		'horizon_cruise_content_render_relationship_diagnostic'
+	);
+}
+add_action( 'admin_menu', 'horizon_cruise_content_register_relationship_diagnostic' );
+
+/**
+ * Formats a diagnostic value without loading or displaying unrelated records.
+ *
+ * @param mixed $value Value to display.
+ * @return string
+ */
+function horizon_cruise_content_format_diagnostic_value( $value ) {
+	if ( null === $value ) {
+		return 'null';
+	}
+	if ( is_bool( $value ) ) {
+		return $value ? 'true' : 'false';
+	}
+	if ( is_scalar( $value ) ) {
+		return (string) $value;
+	}
+
+	$encoded = wp_json_encode( $value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+	return false === $encoded ? '[value could not be encoded]' : $encoded;
+}
+
+/**
+ * Outputs one escaped diagnostic table row.
+ *
+ * @param string $label Label.
+ * @param mixed  $value Value.
+ * @param string $type  Optional explicit type description.
+ * @return void
+ */
+function horizon_cruise_content_diagnostic_row( $label, $value, $type = '' ) {
+	?>
+	<tr>
+		<th scope="row"><?php echo esc_html( $label ); ?></th>
+		<td><?php echo esc_html( $type ? $type : gettype( $value ) ); ?></td>
+		<td><pre style="margin:0;white-space:pre-wrap"><?php echo esc_html( horizon_cruise_content_format_diagnostic_value( $value ) ); ?></pre></td>
+	</tr>
+	<?php
+}
+
+/**
+ * Renders the fixed Ship 54 / Cruise Line 26 read-only diagnostic.
+ *
+ * @return void
+ */
+function horizon_cruise_content_render_relationship_diagnostic() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die(
+			esc_html__( 'You do not have permission to view this diagnostic.', 'horizon-cruise-content' ),
+			esc_html__( 'Horizon Cruise diagnostic', 'horizon-cruise-content' ),
+			array( 'response' => 403 )
+		);
+	}
+
+	$plugin_data    = get_file_data( __FILE__, array( 'version' => 'Version' ) );
+	$pods_available = function_exists( 'pods' );
+	$candidate_ids  = get_posts(
+		array(
+			'post_type'              => 'ship',
+			'post_status'            => array_values( get_post_stati() ),
+			'posts_per_page'         => -1,
+			'fields'                 => 'ids',
+			'no_found_rows'          => true,
+			'orderby'                => 'ID',
+			'order'                  => 'ASC',
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		)
+	);
+	$candidate_has_54 = in_array( 54, array_map( 'absint', $candidate_ids ), true );
+	$ship_pod         = $pods_available ? pods( 'ship', 54 ) : false;
+	$ship_loaded      = $ship_pod && 54 === absint( $ship_pod->id() );
+	$raw_relationship = $ship_loaded ? $ship_pod->field( 'cruise_line' ) : null;
+	$id_relationship  = $ship_loaded ? $ship_pod->field( 'cruise_line.ID' ) : null;
+	$extracted_ids    = horizon_cruise_content_extract_relationship_ids( $id_relationship );
+	$resolver_ids     = horizon_cruise_content_get_ship_ids_for_cruise_line( 26 );
+	$line_status      = get_post_status( 26 );
+	?>
+	<div class="wrap">
+		<h1><?php esc_html_e( 'HC Relationship Diagnostic', 'horizon-cruise-content' ); ?></h1>
+		<p><?php esc_html_e( 'Read-only diagnostic for Ship 54 and Cruise Line 26. This screen does not modify WordPress data.', 'horizon-cruise-content' ); ?></p>
+		<table class="widefat striped" style="max-width:1100px">
+			<thead><tr><th><?php esc_html_e( 'Check', 'horizon-cruise-content' ); ?></th><th><?php esc_html_e( 'PHP type', 'horizon-cruise-content' ); ?></th><th><?php esc_html_e( 'Value', 'horizon-cruise-content' ); ?></th></tr></thead>
+			<tbody>
+				<?php horizon_cruise_content_diagnostic_row( 'Loaded plugin version', $plugin_data['version'], gettype( $plugin_data['version'] ) ); ?>
+				<?php horizon_cruise_content_diagnostic_row( 'Pods available', $pods_available, gettype( $pods_available ) ); ?>
+				<?php horizon_cruise_content_diagnostic_row( 'Candidate Ship query includes ID 54', $candidate_has_54, gettype( $candidate_has_54 ) ); ?>
+				<?php horizon_cruise_content_diagnostic_row( 'Pods successfully loads Ship 54', $ship_loaded, gettype( $ship_loaded ) ); ?>
+				<?php horizon_cruise_content_diagnostic_row( "field('cruise_line')", $raw_relationship, gettype( $raw_relationship ) ); ?>
+				<?php horizon_cruise_content_diagnostic_row( "field('cruise_line.ID')", $id_relationship, gettype( $id_relationship ) ); ?>
+				<?php horizon_cruise_content_diagnostic_row( 'Extracted relationship IDs', $extracted_ids, gettype( $extracted_ids ) ); ?>
+				<?php horizon_cruise_content_diagnostic_row( 'get_ship_ids_for_cruise_line(26)', $resolver_ids, gettype( $resolver_ids ) ); ?>
+				<?php horizon_cruise_content_diagnostic_row( 'Cruise Line 26 publication status', $line_status, gettype( $line_status ) ); ?>
+			</tbody>
+		</table>
+	</div>
+	<?php
+}
 
 /**
  * Returns whether a post type belongs to Horizon Cruise structured content.

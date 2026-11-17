@@ -11,7 +11,7 @@ The plugin registers four structured content types:
 
 The content types are editable in WordPress and exposed through the standard REST API. They do not have WordPress-rendered public pages or archives. The separate Next.js application will eventually render their public pages.
 
-Version 0.4.2 provides an administrator-only, preview-first CSV importer for Cruise Lines, Ships, Ship Features and Featured Journeys under **Tools → Horizon Cruise Import**. It also adds exact Cruise Line relationship filtering to the Ships REST collection. The importer uses a permanent private `import_key` to update records safely and never matches records by title.
+Version 0.4.3 provides an administrator-only, preview-first CSV importer for Cruise Lines, Ships, Ship Features and Featured Journeys under **Tools → Horizon Cruise Import**. It also adds exact Cruise Line relationship filtering to the Ships REST collection. This temporary diagnostic build includes **Tools → HC Relationship Diagnostic** for the fixed Ship 54 / Cruise Line 26 read-only test. The importer uses a permanent private `import_key` to update records safely and never matches records by title.
 
 Only titles, featured images and revisions are enabled. There is no unrestricted main content editor. Pods fields, taxonomies, relationships, frontend templates and example records are intentionally outside this first stage.
 

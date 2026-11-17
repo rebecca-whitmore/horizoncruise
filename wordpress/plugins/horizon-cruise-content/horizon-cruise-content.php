@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Horizon Cruise Content
  * Description:       Registers structured cruise lines, ships, and featured journeys for the Horizon Cruise headless WordPress CMS.
- * Version:           0.4.3
+ * Version:           0.4.4
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Horizon Cruise
@@ -349,15 +349,30 @@ function horizon_cruise_content_filter_ships_by_cruise_line( $args, $request ) {
 		return $args;
 	}
 
+	$trace_enabled = ! empty( $GLOBALS['horizon_cruise_content_capture_rest_trace'] )
+		&& current_user_can( 'manage_options' );
+	$incoming_args = $trace_enabled ? $args : null;
+
 	$ship_ids = horizon_cruise_content_get_ship_ids_for_cruise_line(
 		$request->get_param( 'cruise_line' )
 	);
+	$resolver_ids = $ship_ids;
 
 	if ( isset( $args['post__in'] ) && is_array( $args['post__in'] ) ) {
 		$ship_ids = array_values( array_intersect( array_map( 'absint', $args['post__in'] ), $ship_ids ) );
 	}
 
 	$args['post__in'] = $ship_ids ? $ship_ids : array( 0 );
+
+	if ( $trace_enabled ) {
+		$GLOBALS['horizon_cruise_content_rest_trace'] = array(
+			'filter_executed' => true,
+			'pods_available'  => function_exists( 'pods' ),
+			'resolver_ids'    => $resolver_ids,
+			'incoming_args'   => $incoming_args,
+			'final_args'      => $args,
+		);
+	}
 
 	return $args;
 }
@@ -455,6 +470,26 @@ function horizon_cruise_content_render_relationship_diagnostic() {
 	$extracted_ids    = horizon_cruise_content_extract_relationship_ids( $id_relationship );
 	$resolver_ids     = horizon_cruise_content_get_ship_ids_for_cruise_line( 26 );
 	$line_status      = get_post_status( 26 );
+
+	/*
+	 * Exercise the normal REST controller internally while the administrator is
+	 * viewing this private screen. The trace exists only in memory for this
+	 * request; it is not exposed by a public endpoint or stored in WordPress.
+	 */
+	$GLOBALS['horizon_cruise_content_capture_rest_trace'] = true;
+	$GLOBALS['horizon_cruise_content_rest_trace']         = array(
+		'filter_executed' => false,
+	);
+	$rest_request = new WP_REST_Request( 'GET', '/wp/v2/ships' );
+	$rest_request->set_param( 'cruise_line', 26 );
+	$rest_request->set_param( 'context', 'view' );
+	$rest_request->set_param( '_fields', 'id,title,status,cruise_line' );
+	$rest_response = rest_do_request( $rest_request );
+	$rest_trace    = $GLOBALS['horizon_cruise_content_rest_trace'];
+	unset( $GLOBALS['horizon_cruise_content_capture_rest_trace'], $GLOBALS['horizon_cruise_content_rest_trace'] );
+
+	$rest_status = $rest_response->get_status();
+	$rest_data   = $rest_response->get_data();
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'HC Relationship Diagnostic', 'horizon-cruise-content' ); ?></h1>
@@ -471,6 +506,20 @@ function horizon_cruise_content_render_relationship_diagnostic() {
 				<?php horizon_cruise_content_diagnostic_row( 'Extracted relationship IDs', $extracted_ids, gettype( $extracted_ids ) ); ?>
 				<?php horizon_cruise_content_diagnostic_row( 'get_ship_ids_for_cruise_line(26)', $resolver_ids, gettype( $resolver_ids ) ); ?>
 				<?php horizon_cruise_content_diagnostic_row( 'Cruise Line 26 publication status', $line_status, gettype( $line_status ) ); ?>
+			</tbody>
+		</table>
+		<h2><?php esc_html_e( 'Private REST request trace', 'horizon-cruise-content' ); ?></h2>
+		<p><?php esc_html_e( 'This runs the standard Ships REST controller internally and keeps the trace on this administrator-only page.', 'horizon-cruise-content' ); ?></p>
+		<table class="widefat striped" style="max-width:1100px">
+			<thead><tr><th><?php esc_html_e( 'Check', 'horizon-cruise-content' ); ?></th><th><?php esc_html_e( 'PHP type', 'horizon-cruise-content' ); ?></th><th><?php esc_html_e( 'Value', 'horizon-cruise-content' ); ?></th></tr></thead>
+			<tbody>
+				<?php horizon_cruise_content_diagnostic_row( 'REST filter executed', isset( $rest_trace['filter_executed'] ) ? $rest_trace['filter_executed'] : false ); ?>
+				<?php horizon_cruise_content_diagnostic_row( 'Pods available in REST filter', isset( $rest_trace['pods_available'] ) ? $rest_trace['pods_available'] : null ); ?>
+				<?php horizon_cruise_content_diagnostic_row( 'Resolver IDs in REST filter', isset( $rest_trace['resolver_ids'] ) ? $rest_trace['resolver_ids'] : null ); ?>
+				<?php horizon_cruise_content_diagnostic_row( 'Incoming REST query arguments', isset( $rest_trace['incoming_args'] ) ? $rest_trace['incoming_args'] : null ); ?>
+				<?php horizon_cruise_content_diagnostic_row( 'Final REST query arguments', isset( $rest_trace['final_args'] ) ? $rest_trace['final_args'] : null ); ?>
+				<?php horizon_cruise_content_diagnostic_row( 'Internal REST response status', $rest_status ); ?>
+				<?php horizon_cruise_content_diagnostic_row( 'Internal REST response data', $rest_data ); ?>
 			</tbody>
 		</table>
 	</div>

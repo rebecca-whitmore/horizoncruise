@@ -70,6 +70,9 @@ a { color: inherit; }
 .api-prototype { margin-top: 4rem; padding-top: 3rem; border-top: 1px solid var(--line); }
 .api-prototype-heading { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .65fr); gap: 2rem; align-items: end; margin-bottom: 2rem; }
 .api-prototype-heading > p { margin: 0; }
+.api-profile-separator { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .65fr); gap: 2rem; align-items: end; margin: 4rem 0 2rem; padding-top: 3rem; border-top: 1px solid var(--line); }
+.api-profile-separator h2 { margin: 0; }
+.api-profile-separator > p { margin: 0; }
 .ship-experience { overflow: hidden; border: 1px solid var(--line); background: var(--paper); }
 .ship-profile-hero { position: relative; min-height: 430px; overflow: hidden; background: var(--sea); }
 .ship-profile-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -253,7 +256,7 @@ a { color: inherit; }
   .site-header { align-items: flex-start; padding-block: 1.25rem; }
   .site-nav { flex-wrap: wrap; justify-content: flex-end; gap: .65rem 1rem; }
   .article-grid { grid-template-columns: 1fr; }
-  .api-prototype-heading, .ship-overview, .cruise-line-body { grid-template-columns: 1fr; }
+  .api-prototype-heading, .api-profile-separator, .ship-overview, .cruise-line-body { grid-template-columns: 1fr; }
   .ship-profile-hero, .ship-profile-heading { min-height: 390px; }
   .ship-profile-heading { width: 100%; padding: 2rem 1.5rem; }
   .ship-profile-overlay { background: linear-gradient(0deg, rgba(12, 28, 29, .92) 0%, rgba(12, 28, 29, .3) 85%); }

@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { SiteHeader } from "@/app/layout";
 import { CruiseLineContent } from "@/components/cruise-line-content";
 import { WidgetySearch } from "@/components/widgety-search";
-import { getCelebrityCruisesContent } from "@/lib/widgety";
+import {
+  getCelebrityCruisesContent,
+  getSilverseaCruisesContent,
+} from "@/lib/widgety";
 
 export const metadata: Metadata = {
   title: "Development playground | Horizon Cruise",
@@ -16,7 +19,10 @@ export const dynamic = "force-dynamic";
  * Do not delete this route unless the project owner explicitly approves it.
  */
 export default async function PlaygroundPage() {
-  const result = await getCelebrityCruisesContent();
+  const [celebrityResult, silverseaResult] = await Promise.all([
+    getCelebrityCruisesContent(),
+    getSilverseaCruisesContent(),
+  ]);
 
   return (
     <>
@@ -51,11 +57,30 @@ export default async function PlaygroundPage() {
             </p>
           </div>
 
-          {result.cruiseLine ? (
-            <CruiseLineContent cruiseLine={result.cruiseLine} />
+          {celebrityResult.cruiseLine ? (
+            <CruiseLineContent cruiseLine={celebrityResult.cruiseLine} />
           ) : (
             <div className="notice" role="status">
-              {result.message ?? "The cruise-line content is temporarily unavailable."}
+              {celebrityResult.message ?? "The cruise-line content is temporarily unavailable."}
+            </div>
+          )}
+
+          <div className="api-profile-separator">
+            <div>
+              <p className="playground-label">Tool two &middot; Custom API</p>
+              <h2>Silversea profile</h2>
+            </div>
+            <p>
+              A second cruise-line profile using the same flexible presentation
+              and Silversea&apos;s own operator-level content from Widgety.
+            </p>
+          </div>
+
+          {silverseaResult.cruiseLine ? (
+            <CruiseLineContent cruiseLine={silverseaResult.cruiseLine} />
+          ) : (
+            <div className="notice" role="status">
+              {silverseaResult.message ?? "The Silversea content is temporarily unavailable."}
             </div>
           )}
         </section>

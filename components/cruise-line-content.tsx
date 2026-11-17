@@ -13,7 +13,7 @@ export function CruiseLineContent({
           <Image
             className="ship-profile-image"
             src={cruiseLine.imageUrl}
-            alt="Celebrity Cruises ship at sea"
+            alt={`${cruiseLine.title} ship at sea`}
             width={1800}
             height={1000}
             sizes="(max-width: 1160px) 100vw, 1120px"
@@ -29,7 +29,7 @@ export function CruiseLineContent({
 
       <div className="cruise-line-body">
         <div className="cruise-line-introduction">
-          <p className="playground-label">The Celebrity experience</p>
+          <p className="playground-label">The {cruiseLine.title} experience</p>
           <h4>More than a way to travel</h4>
           <p>
             Explore the style, spaces, dining, entertainment and wellbeing
@@ -38,7 +38,7 @@ export function CruiseLineContent({
           {cruiseLine.shipCount ? (
             <p className="cruise-line-fleet-note">
               The current Widgety profile includes {cruiseLine.shipCount} ships
-              in the Celebrity fleet.
+              in the {cruiseLine.title} fleet.
             </p>
           ) : null}
         </div>

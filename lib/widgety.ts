@@ -321,16 +321,34 @@ const getCachedCelebrityCruises = unstable_cache(
   { revalidate: 3600 },
 );
 
-/** Fetches and maps line-level Celebrity Cruises content for our prototype. */
-export async function getCelebrityCruisesContent(): Promise<WidgetyCruiseLineContentResult> {
+const getCachedSilverseaCruises = unstable_cache(
+  async () => mapCruiseLine(await widgetyRequest("operators/silversea-cruises.json")),
+  ["widgety-cruise-line-content", "silversea-cruises", "v1"],
+  { revalidate: 3600 },
+);
+
+async function getCruiseLineContent(
+  loader: () => Promise<WidgetyCruiseLineContent | undefined>,
+  logName: string,
+): Promise<WidgetyCruiseLineContentResult> {
   try {
-    const cruiseLine = await getCachedCelebrityCruises();
+    const cruiseLine = await loader();
     return cruiseLine
       ? { cruiseLine }
       : { message: "Widgety returned an unexpected cruise-line record." };
   } catch {
     // Fetch errors can contain the credential-bearing URL, so do not log them.
-    console.error("Could not load the Widgety cruise-line content.");
+    console.error(`Could not load the Widgety ${logName} cruise-line content.`);
     return { message: "The Widgety API could not be reached at the moment." };
   }
+}
+
+/** Fetches and maps line-level Celebrity Cruises content for our prototype. */
+export async function getCelebrityCruisesContent(): Promise<WidgetyCruiseLineContentResult> {
+  return getCruiseLineContent(getCachedCelebrityCruises, "Celebrity Cruises");
+}
+
+/** Fetches and maps line-level Silversea content for our prototype. */
+export async function getSilverseaCruisesContent(): Promise<WidgetyCruiseLineContentResult> {
+  return getCruiseLineContent(getCachedSilverseaCruises, "Silversea");
 }

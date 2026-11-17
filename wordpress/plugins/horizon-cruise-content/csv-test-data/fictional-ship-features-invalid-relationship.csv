@@ -1,0 +1,3 @@
+import_key,title,ship_import_key,section,description,display_order
+test-feature-aurora-one-dining,Aurora One Dining (Fictional),test-ship-does-not-exist,dining,This must not be saved.,10
+test-feature-aurora-two-enrichment,Aurora Two Enrichment (Fictional),test-ship-aurora-two,enrichment,"<p>A fictional enrichment feature used only to test relationship resolution.</p>",20

@@ -108,6 +108,15 @@ a { color: inherit; }
 .deck-plan-view { min-width: 0; }
 .deck-plan-view > div { max-width: 700px; }
 .deck-plan-image { display: block; width: 100%; height: auto; max-height: 800px; margin-top: 2rem; object-fit: contain; object-position: top left; background: #fff; border: 1px solid var(--line); }
+.cruise-line-body { display: grid; grid-template-columns: minmax(240px, .65fr) minmax(0, 1.6fr); gap: clamp(2rem, 6vw, 5rem); padding: clamp(2rem, 5vw, 4.5rem); }
+.cruise-line-introduction { align-self: start; }
+.cruise-line-introduction h4 { margin: 0 0 1rem; font: 500 clamp(2rem, 4vw, 3.5rem)/1 Georgia, serif; }
+.cruise-line-introduction > p { margin: 0 0 1rem; }
+.cruise-line-fleet-note { padding-top: 1rem; border-top: 1px solid var(--line); font-size: .82rem; }
+.cruise-line-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 2.5rem; }
+.cruise-line-sections section { padding: 0 0 2rem; margin: 0 0 2rem; border-bottom: 1px solid var(--line); }
+.cruise-line-sections h5 { margin: 0 0 .75rem; font: 500 1.45rem/1.15 Georgia, serif; }
+.cruise-line-sections p { margin: 0; }
 .search-playground-page { width: min(1320px, calc(100% - 2rem)); }
 .search-playground-intro { max-width: 720px; color: var(--muted); font: 1.05rem/1.65 Georgia, serif; }
 .holiday-search-layout { display: grid; grid-template-columns: minmax(245px, 1fr) minmax(0, 2.35fr); gap: 1.5rem; align-items: start; }
@@ -244,11 +253,12 @@ a { color: inherit; }
   .site-header { align-items: flex-start; padding-block: 1.25rem; }
   .site-nav { flex-wrap: wrap; justify-content: flex-end; gap: .65rem 1rem; }
   .article-grid { grid-template-columns: 1fr; }
-  .api-prototype-heading, .ship-overview { grid-template-columns: 1fr; }
+  .api-prototype-heading, .ship-overview, .cruise-line-body { grid-template-columns: 1fr; }
   .ship-profile-hero, .ship-profile-heading { min-height: 390px; }
   .ship-profile-heading { width: 100%; padding: 2rem 1.5rem; }
   .ship-profile-overlay { background: linear-gradient(0deg, rgba(12, 28, 29, .92) 0%, rgba(12, 28, 29, .3) 85%); }
   .ship-content-grid { grid-template-columns: 1fr; }
+  .cruise-line-sections { grid-template-columns: 1fr; }
   .deck-plan-layout { grid-template-columns: 1fr; }
   .deck-list { display: grid; grid-template-columns: repeat(2, 1fr); }
   .deck-list button { border-right: 1px solid var(--line); }

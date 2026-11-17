@@ -46,6 +46,24 @@ export type WidgetyShipContentResult = {
   message?: string;
 };
 
+export type CruiseLineSection = {
+  heading: string;
+  body: string;
+};
+
+export type WidgetyCruiseLineContent = {
+  title: string;
+  introduction: string;
+  imageUrl?: string;
+  shipCount: number;
+  sections: CruiseLineSection[];
+};
+
+export type WidgetyCruiseLineContentResult = {
+  cruiseLine?: WidgetyCruiseLineContent;
+  message?: string;
+};
+
 function asRecord(value: unknown): JsonRecord | undefined {
   return typeof value === "object" && value !== null
     ? (value as JsonRecord)
@@ -184,6 +202,47 @@ function practicalItem(name: string, value: unknown): ShipContentItem | undefine
   return description ? { name, description } : undefined;
 }
 
+function mapCruiseLine(payload: JsonRecord): WidgetyCruiseLineContent | undefined {
+  const title = asString(payload.title);
+  const description = asString(payload.description);
+  if (!title || !description) return undefined;
+
+  const paragraphs = [...description.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+    .map((match) => match[1])
+    .filter(Boolean);
+  const sections: CruiseLineSection[] = [];
+  let current: CruiseLineSection | undefined;
+
+  for (const paragraph of paragraphs) {
+    const headingMatch = paragraph.match(/<strong[^>]*>([\s\S]*?)<\/strong>/i);
+    const heading = headingMatch ? plainText(headingMatch[1]) : "";
+    const body = plainText(
+      headingMatch ? paragraph.replace(headingMatch[0], "") : paragraph,
+    );
+
+    if (heading) {
+      current = { heading, body };
+      sections.push(current);
+    } else if (body && current) {
+      current.body = [current.body, body].filter(Boolean).join(" ");
+    } else if (body) {
+      current = { heading: "About Celebrity Cruises", body };
+      sections.push(current);
+    }
+  }
+
+  const introduction = sections.shift();
+  const ships = Array.isArray(payload.ships) ? payload.ships : [];
+
+  return {
+    title,
+    introduction: introduction?.body || concise(description, 900),
+    imageUrl: asString(payload.cover_image_href),
+    shipCount: ships.length,
+    sections: sections.filter((section) => section.body),
+  };
+}
+
 function mapShip(payload: JsonRecord): WidgetyShipContent | undefined {
   const title = asString(payload.title);
   if (!title) return undefined;
@@ -252,6 +311,26 @@ export async function getCelebrityEdgeContent(): Promise<WidgetyShipContentResul
   } catch {
     // Fetch errors can contain the credential-bearing URL, so do not log them.
     console.error("Could not load the Widgety ship content.");
+    return { message: "The Widgety API could not be reached at the moment." };
+  }
+}
+
+const getCachedCelebrityCruises = unstable_cache(
+  async () => mapCruiseLine(await widgetyRequest("operators/celebrity-cruises.json")),
+  ["widgety-cruise-line-content", "celebrity-cruises", "v1"],
+  { revalidate: 3600 },
+);
+
+/** Fetches and maps line-level Celebrity Cruises content for our prototype. */
+export async function getCelebrityCruisesContent(): Promise<WidgetyCruiseLineContentResult> {
+  try {
+    const cruiseLine = await getCachedCelebrityCruises();
+    return cruiseLine
+      ? { cruiseLine }
+      : { message: "Widgety returned an unexpected cruise-line record." };
+  } catch {
+    // Fetch errors can contain the credential-bearing URL, so do not log them.
+    console.error("Could not load the Widgety cruise-line content.");
     return { message: "The Widgety API could not be reached at the moment." };
   }
 }

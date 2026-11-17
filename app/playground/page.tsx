@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/app/layout";
-import { ShipContentTabs } from "@/components/ship-content-tabs";
+import { CruiseLineContent } from "@/components/cruise-line-content";
 import { WidgetySearch } from "@/components/widgety-search";
-import { getCelebrityEdgeContent } from "@/lib/widgety";
+import { getCelebrityCruisesContent } from "@/lib/widgety";
 
 export const metadata: Metadata = {
   title: "Development playground | Horizon Cruise",
@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
  * Do not delete this route unless the project owner explicitly approves it.
  */
 export default async function PlaygroundPage() {
-  const result = await getCelebrityEdgeContent();
+  const result = await getCelebrityCruisesContent();
 
   return (
     <>
@@ -43,20 +43,19 @@ export default async function PlaygroundPage() {
           <div className="api-prototype-heading">
             <div>
               <p className="playground-label">Tool two &middot; Custom API</p>
-              <h2 id="api-heading">Horizon Cruise ship experience</h2>
+              <h2 id="api-heading">Celebrity Cruises profile</h2>
             </div>
             <p>
-              Real Celebrity Edge content supplied by Widgety, presented through
-              a custom interface that we can refine without the widget&apos;s layout
-              restrictions.
+              Cruise-line content supplied by Widgety, presented through a custom
+              interface that we can refine without the widget&apos;s layout restrictions.
             </p>
           </div>
 
-          {result.ship ? (
-            <ShipContentTabs ship={result.ship} />
+          {result.cruiseLine ? (
+            <CruiseLineContent cruiseLine={result.cruiseLine} />
           ) : (
             <div className="notice" role="status">
-              {result.message ?? "The ship content is temporarily unavailable."}
+              {result.message ?? "The cruise-line content is temporarily unavailable."}
             </div>
           )}
         </section>

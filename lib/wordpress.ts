@@ -63,6 +63,16 @@ export type WordPressShip = {
   _embedded?: WordPressPost["_embedded"];
 };
 
+export type WordPressCruiseLine = {
+  id: number;
+  slug: string;
+  modified: string;
+  title: RenderedText;
+  short_introduction?: string;
+  full_overview?: string;
+  _embedded?: WordPressPost["_embedded"];
+};
+
 export type FetchResult<T> =
   | { status: "success"; data: T }
   | { status: "error"; message: string };
@@ -165,6 +175,32 @@ export async function getShipsByCruiseLine(
       error,
     );
     return { status: "error", message: "This fleet is temporarily unavailable." };
+  }
+}
+
+/** Retrieves one published Cruise Line by its exact WordPress slug. */
+export async function getCruiseLineBySlug(
+  slug: string,
+): Promise<FetchResult<WordPressCruiseLine | null>> {
+  const cleanSlug = slug.trim().toLowerCase();
+  if (!cleanSlug) return { status: "success", data: null };
+
+  try {
+    const search = new URLSearchParams({
+      slug: cleanSlug,
+      per_page: "1",
+      _embed: "wp:featuredmedia",
+    });
+    const lines = await request<WordPressCruiseLine[]>(
+      apiUrl("cruise-lines", `?${search.toString()}`),
+    );
+    return { status: "success", data: lines[0] ?? null };
+  } catch (error) {
+    console.error(`Could not load cruise line “${cleanSlug}”:`, error);
+    return {
+      status: "error",
+      message: "This cruise line is temporarily unavailable.",
+    };
   }
 }
 

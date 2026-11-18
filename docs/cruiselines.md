@@ -24,7 +24,6 @@ https://www.cruisesfromsouthwales.co.uk/cruise-operator/croisieurope
 
 https://www.cruisesfromsouthwales.co.uk/cruise-operator/crystal
 
-https://www.cruisesfromsouthwales.co.uk/cruise-operator/cunard
 
 https://www.cruisesfromsouthwales.co.uk/cruise-operator/disney-cruise-line
 

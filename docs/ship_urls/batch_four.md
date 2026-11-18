@@ -3,11 +3,7 @@ https://www.widgety.co.uk/widgets/B2qoyWDJq4zpbobqbA9x/ships/crystal-grace.widge
 https://www.widgety.co.uk/widgets/B2qoyWDJq4zpbobqbA9x/ships/crystal-serenity.widget?operator_ids%5B%5D=18
 https://www.widgety.co.uk/widgets/B2qoyWDJq4zpbobqbA9x/ships/crystal-symphony.widget?operator_ids%5B%5D=18
 
-Cunard
-https://www.widgety.co.uk/widgets/B2qoyWDJq4zpbobqbA9x/ships/queen-anne.widget?operator_ids%5B%5D=19
-https://www.widgety.co.uk/widgets/B2qoyWDJq4zpbobqbA9x/ships/queen-elizabeth.widget?operator_ids%5B%5D=19
-https://www.widgety.co.uk/widgets/B2qoyWDJq4zpbobqbA9x/ships/queen-mary-2.widget?operator_ids%5B%5D=19
-https://www.widgety.co.uk/widgets/B2qoyWDJq4zpbobqbA9x/ships/queen-victoria.widget?operator_ids%5B%5D=19
+
 
 Disney - I will come back to
 

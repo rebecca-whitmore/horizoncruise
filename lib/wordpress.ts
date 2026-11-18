@@ -60,6 +60,14 @@ export type WordPressShip = {
   modified: string;
   title: RenderedText;
   cruise_line?: number;
+  short_introduction?: string;
+  full_overview?: string;
+  staterooms?: string;
+  dining?: string;
+  entertainment?: string;
+  health_fitness?: string;
+  younger_travellers?: string;
+  enrichment?: string;
   _embedded?: WordPressPost["_embedded"];
 };
 
@@ -175,6 +183,32 @@ export async function getShipsByCruiseLine(
       error,
     );
     return { status: "error", message: "This fleet is temporarily unavailable." };
+  }
+}
+
+/** Retrieves one published Ship by its exact WordPress slug. */
+export async function getShipBySlug(
+  slug: string,
+): Promise<FetchResult<WordPressShip | null>> {
+  const cleanSlug = slug.trim().toLowerCase();
+  if (!cleanSlug) return { status: "success", data: null };
+
+  try {
+    const search = new URLSearchParams({
+      slug: cleanSlug,
+      per_page: "1",
+      _embed: "wp:featuredmedia",
+    });
+    const ships = await request<WordPressShip[]>(
+      apiUrl("ships", `?${search.toString()}`),
+    );
+    return { status: "success", data: ships[0] ?? null };
+  } catch (error) {
+    console.error(`Could not load ship “${cleanSlug}”:`, error);
+    return {
+      status: "error",
+      message: "This ship is temporarily unavailable.",
+    };
   }
 }
 

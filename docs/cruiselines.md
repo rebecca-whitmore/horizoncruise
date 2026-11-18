@@ -12,8 +12,6 @@ https://www.cruisesfromsouthwales.co.uk/cruise-operator/avalon-waterways
 
 https://www.cruisesfromsouthwales.co.uk/cruise-operator/carnival-cruise-line
 
-https://www.cruisesfromsouthwales.co.uk/cruise-operator/celebrity-cruises
-
 https://www.cruisesfromsouthwales.co.uk/cruise-operator/celebrity-river-cruises
 
 https://www.cruisesfromsouthwales.co.uk/cruise-operator/celestyal-cruises
@@ -52,8 +50,6 @@ https://www.cruisesfromsouthwales.co.uk/cruise-operator/ponant-explorations
 https://www.cruisesfromsouthwales.co.uk/cruise-operator/pandaw
 
 https://www.cruisesfromsouthwales.co.uk/cruise-operator/paul-gauguin-cruises
-
-https://www.cruisesfromsouthwales.co.uk/cruise-operator/princess-cruises
 
 https://www.cruisesfromsouthwales.co.uk/cruise-operator/regent-seven-seas-cruises
 
